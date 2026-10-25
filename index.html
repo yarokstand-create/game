@@ -3,143 +3,163 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Поймай квадрат — 50 уровней + Бесконечность</title>
+<title>GTA: Pоimай Квадрат</title>
+
+<!-- Подключаем легендарный шрифт Pricedown (GTA) -->
+<link href="https://fonts.googleapis.com/css2?family=Pricedown&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,400;0,700;1,700&display=swap" rel="stylesheet">
+
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: system-ui, -apple-system, sans-serif;
-    background: #0d0d1a; color: #eee;
+    font-family: 'Roboto Condensed', sans-serif;
+    background: #000;
+    color: #fff;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     min-height: 100vh; padding: 16px; user-select: none;
     transition: background 0.5s;
+    background-image: radial-gradient(circle at 50% 0%, #2a1a00, #000 70%);
   }
-  h1 { font-size: 1.5rem; margin-bottom: 6px; color: #e94560; letter-spacing: 1px; text-align: center; }
-  .sub { font-size: 0.85rem; color: #7a8ba8; margin-bottom: 14px; text-align: center; }
+  
+  /* GTA Шрифты */
+  .gta-font { font-family: 'Pricedown', 'Arial Black', sans-serif; text-transform: uppercase; letter-spacing: 2px; }
+  
+  h1 { font-size: 2.5rem; margin-bottom: 6px; color: #f39c12; text-shadow: 3px 3px 0px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; text-align: center; }
+  .sub { font-size: 1rem; color: #bbb; margin-bottom: 14px; text-align: center; font-style: italic; }
 
+  /* Верхняя панель */
   #topPanel { width: 90vw; max-width: 500px; display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 10px; min-height: 30px; }
-  .auth-btn { background: #0f3460; color: #eee; border: 1px solid #1a4a7a; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: bold; transition: background 0.2s; }
-  .auth-btn:hover { background: #1a4a7a; }
-  .auth-btn.primary { background: #e94560; border-color: #ff6b6b; }
-  .auth-btn.primary:hover { background: #ff6b6b; }
-  .user-profile { font-size: 0.85rem; color: #7a8ba8; display: flex; align-items: center; gap: 10px; }
-  .user-profile b { color: #4ecca3; font-size: 1rem; }
+  .auth-btn { background: #222; color: #f39c12; border: 2px solid #f39c12; padding: 6px 14px; border-radius: 0; font-size: 1rem; font-family: 'Pricedown', sans-serif; cursor: pointer; font-weight: bold; transition: all 0.2s; text-transform: uppercase; box-shadow: 2px 2px 0 #000; }
+  .auth-btn:hover { background: #f39c12; color: #000; }
+  .user-profile { font-size: 1rem; color: #ccc; display: flex; align-items: center; gap: 10px; font-weight: bold; }
+  .user-profile b { color: #f39c12; font-size: 1.2rem; font-family: 'Pricedown', sans-serif; }
 
+  /* HUD (в игре) */
   #hud { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center; }
-  .stat { background: #16213e; border: 1px solid #0f3460; border-radius: 10px; padding: 8px 16px; text-align: center; min-width: 80px; }
-  .stat .label { font-size: 0.7rem; color: #7a8ba8; text-transform: uppercase; letter-spacing: 0.5px; }
-  .stat .value { font-size: 1.3rem; font-weight: bold; color: #4ecca3; }
+  .stat { background: rgba(0, 0, 0, 0.8); border: 2px solid #444; border-radius: 0; padding: 8px 16px; text-align: center; min-width: 80px; box-shadow: inset 0 0 10px #000; }
+  .stat .label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+  .stat .value { font-size: 1.4rem; font-weight: bold; color: #f39c12; font-family: 'Pricedown', sans-serif; }
 
-  #timebar-wrap { width: 90vw; max-width: 500px; height: 10px; background: #16213e; border-radius: 6px; overflow: hidden; margin-bottom: 10px; border: 1px solid #0f3460; }
-  #timebar { height: 100%; width: 100%; background: linear-gradient(90deg, #4ecca3, #e94560); transition: width 0.1s linear; border-radius: 6px; }
+  #timebar-wrap { width: 90vw; max-width: 500px; height: 12px; background: #222; border-radius: 0; overflow: hidden; margin-bottom: 10px; border: 2px solid #444; }
+  #timebar { height: 100%; width: 100%; background: #f39c12; transition: width 0.1s linear; }
 
   #controlBar { width: 90vw; max-width: 500px; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; min-height: 40px; }
-  #comboBadge { background: rgba(233,69,96,0.9); color: #fff; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; opacity: 0; transform: translateY(-4px); transition: all 0.2s; box-shadow: 0 0 16px rgba(233,69,96,0.5); }
+  #comboBadge { background: #e74c3c; color: #fff; padding: 8px 16px; font-weight: bold; font-size: 1rem; opacity: 0; transform: translateY(-4px); transition: all 0.2s; border: 2px solid #fff; font-family: 'Pricedown', sans-serif; }
   #comboBadge.show { opacity: 1; transform: translateY(0); }
   #controlsRight { display: flex; gap: 8px; margin-left: auto; }
-  #controlsRight button { padding: 8px 14px; font-size: 0.85rem; background: #0f3460; color: #eee; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
-  #controlsRight button:hover { background: #1a4a7a; }
+  #controlsRight button { padding: 8px 14px; font-size: 0.9rem; background: #222; color: #fff; border: 2px solid #f39c12; border-radius: 0; cursor: pointer; font-weight: bold; transition: background 0.2s; font-family: 'Pricedown', sans-serif; }
+  #controlsRight button:hover { background: #f39c12; color: #000; }
 
-  #arena { position: relative; width: 90vw; max-width: 500px; height: 500px; max-height: 55vh; background: #16213e; border: 2px solid #0f3460; border-radius: 12px; overflow: hidden; cursor: crosshair; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+  /* Арена */
+  #arena { position: relative; width: 90vw; max-width: 500px; height: 500px; max-height: 55vh; background: #111; border: 4px solid #f39c12; overflow: hidden; cursor: crosshair; box-shadow: 0 0 30px rgba(243, 156, 18, 0.2); background-image: radial-gradient(circle at 50% 50%, #222 0%, #050505 100%); }
 
-  #target { position: absolute; background: linear-gradient(135deg, #e94560, #ff6b6b); border-radius: 10px; box-shadow: 0 0 20px rgba(233,69,96,0.7); will-change: left, top, width, height; transition: width 0.2s, height 0.2s; }
-  #target:active { transform: scale(0.92); }
-  
-  .bomb { position: absolute; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #555, #111 70%); box-shadow: 0 0 18px rgba(255,80,80,0.6), inset -4px -4px 8px rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; will-change: left, top; animation: bombPulse 0.8s ease-in-out infinite alternate; }
-  @keyframes bombPulse { from { box-shadow: 0 0 12px rgba(255,80,80,0.4), inset -4px -4px 8px rgba(0,0,0,0.8); } to { box-shadow: 0 0 28px rgba(255,80,80,0.95), inset -4px -4px 8px rgba(0,0,0,0.8); } }
+  /* Квадрат (Цель) */
+  #target { position: absolute; background: #f1c40f; border-radius: 0; box-shadow: 0 0 20px rgba(241, 196, 15, 0.8); will-change: left, top, width, height; transition: width 0.2s, height 0.2s; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+  #target::after { content: '💵'; }
+  #target:active { transform: scale(0.9); }
 
-  /* Стили для бонусов */
+  /* Бомбы */
+  .bomb { position: absolute; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #555, #111 70%); box-shadow: 0 0 18px rgba(231, 76, 60, 0.8), inset -4px -4px 8px rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; will-change: left, top; animation: bombPulse 0.8s ease-in-out infinite alternate; border: 2px solid #e74c3c; }
+  @keyframes bombPulse { from { box-shadow: 0 0 12px rgba(231, 76, 60, 0.4); } to { box-shadow: 0 0 28px rgba(231, 76, 60, 0.95); } }
+
+  /* Бонусы */
   .bonus { position: absolute; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; z-index: 8; animation: bounce 0.5s ease-in-out infinite alternate; }
   @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-5px); } }
-  .bonus.star { color: #ffd700; text-shadow: 0 0 10px #ffd700; }
-  .bonus.time { color: #4ecca3; text-shadow: 0 0 10px #4ecca3; }
+  .bonus.star { color: #f1c40f; text-shadow: 0 0 10px #f1c40f; }
+  .bonus.time { color: #2ecc71; text-shadow: 0 0 10px #2ecc71; }
 
-  .pop { position: absolute; font-weight: bold; color: #4ecca3; pointer-events: none; animation: popUp 0.7s ease-out forwards; font-size: 1.2rem; text-shadow: 0 0 8px rgba(78,204,163,0.8); z-index: 9; }
-  .pop.bad { color: #ff4d4d; text-shadow: 0 0 8px rgba(255,77,77,0.9); }
-  .pop.gold { color: #ffd700; text-shadow: 0 0 8px rgba(255,215,0,0.9); }
+  .pop { position: absolute; font-weight: bold; color: #2ecc71; pointer-events: none; animation: popUp 0.7s ease-out forwards; font-size: 1.4rem; font-family: 'Pricedown', sans-serif; z-index: 9; text-shadow: 2px 2px 0 #000; }
+  .pop.bad { color: #e74c3c; }
+  .pop.gold { color: #f1c40f; }
   @keyframes popUp { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); } 100% { opacity: 0; transform: translate(-50%, -150%) scale(1.3); } }
 
   .flash { position: absolute; border-radius: 50%; pointer-events: none; background: radial-gradient(circle, rgba(255,255,255,0.9), transparent 70%); animation: flashOut 0.4s ease-out forwards; z-index: 5; }
   @keyframes flashOut { 0% { opacity: 0.9; transform: translate(-50%,-50%) scale(0.3); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.6); } }
 
-  .explosion { position: absolute; border-radius: 50%; pointer-events: none; background: radial-gradient(circle, rgba(255,200,0,0.95), rgba(255,60,0,0.5) 50%, transparent 75%); animation: explode 0.5s ease-out forwards; z-index: 7; }
+  .explosion { position: absolute; border-radius: 50%; pointer-events: none; background: radial-gradient(circle, rgba(231, 76, 60, 0.95), rgba(243, 156, 18, 0.5) 50%, transparent 75%); animation: explode 0.5s ease-out forwards; z-index: 7; }
   @keyframes explode { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.3); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(2.2); } }
 
-  #overlay { position: absolute; inset: 0; background: rgba(13, 13, 26, 0.98); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px; text-align: center; padding: 18px; z-index: 10; overflow-y: auto; border-radius: 10px; }
+  /* Оверлей / Меню */
+  #overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px; text-align: center; padding: 18px; z-index: 10; overflow-y: auto; }
   #overlay.hidden { display: none; }
-  #overlay h2 { color: #4ecca3; font-size: 1.4rem; }
-  #overlay p { color: #b0b8c8; line-height: 1.45; font-size: 0.9rem; }
-  #overlay .big { font-size: 2.2rem; color: #e94560; font-weight: bold; }
-  button.action-btn { padding: 12px 32px; font-size: 1.05rem; font-weight: bold; background: #e94560; color: #fff; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.1s, background 0.2s; }
-  button.action-btn:hover { background: #ff6b6b; }
-  button.action-btn:active { transform: scale(0.96); }
+  #overlay h2 { color: #f39c12; font-size: 2rem; font-family: 'Pricedown', sans-serif; text-shadow: 2px 2px 0 #000; }
+  #overlay p { color: #ccc; line-height: 1.45; font-size: 1rem; font-weight: bold; }
+  #overlay .big { font-size: 3rem; color: #f39c12; font-weight: bold; font-family: 'Pricedown', sans-serif; text-shadow: 3px 3px 0 #000; }
+  
+  button.action-btn { padding: 12px 32px; font-size: 1.2rem; font-weight: bold; background: #f39c12; color: #000; border: 2px solid #fff; border-radius: 0; cursor: pointer; transition: transform 0.1s, background 0.2s; font-family: 'Pricedown', sans-serif; text-transform: uppercase; box-shadow: 4px 4px 0 #000; }
+  button.action-btn:hover { background: #e67e22; }
+  button.action-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #000; }
 
-  .settings { width: 100%; max-width: 380px; background: #16213e; border: 1px solid #0f3460; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; text-align: left; }
+  .settings { width: 100%; max-width: 380px; background: #111; border: 2px solid #333; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; text-align: left; box-shadow: inset 0 0 10px #000; }
   .row { display: flex; flex-direction: column; gap: 6px; }
-  .row label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.7px; color: #7a8ba8; font-weight: 600; }
+  .row label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #f39c12; font-weight: 700; }
   .volume-wrap { display: flex; align-items: center; gap: 10px; }
-  input[type="range"] { -webkit-appearance: none; flex: 1; height: 6px; background: #0f3460; border-radius: 4px; outline: none; cursor: pointer; }
-  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #e94560; box-shadow: 0 0 8px rgba(233,69,96,0.8); cursor: pointer; }
-  input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #e94560; border: none; cursor: pointer; }
-  #volVal { font-size: 0.85rem; color: #4ecca3; font-weight: bold; min-width: 42px; text-align: right; }
-  #muteBtn { padding: 6px 10px; font-size: 1rem; background: #0f3460; border-radius: 8px; min-width: 44px; color: #fff; cursor: pointer; border: none; }
-  #muteBtn:hover { background: #1a4a7a; }
+  input[type="range"] { -webkit-appearance: none; flex: 1; height: 8px; background: #333; outline: none; cursor: pointer; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: #f39c12; cursor: pointer; border: 2px solid #fff; }
+  #volVal { font-size: 0.9rem; color: #fff; font-weight: bold; min-width: 42px; text-align: right; font-family: 'Pricedown', sans-serif; }
+  #muteBtn { padding: 6px 10px; font-size: 1rem; background: #222; border: 2px solid #f39c12; color: #fff; cursor: pointer; min-width: 44px; }
+  #muteBtn:hover { background: #f39c12; color: #000; }
 
   #levelGrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 380px; }
-  .lvl { aspect-ratio: 1; border-radius: 8px; background: #0f3460; color: #b0b8c8; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid transparent; transition: transform 0.1s, background 0.2s, border-color 0.2s; position: relative; }
-  .lvl:hover:not(.locked) { background: #1a4a7a; transform: scale(1.05); }
-  .lvl.done { background: #1a5a3a; color: #4ecca3; border-color: #4ecca3; }
-  .lvl.current { background: #e94560; color: #fff; box-shadow: 0 0 12px rgba(233,69,96,0.7); animation: pulse 1.5s infinite; }
-  .lvl.locked { background: #0a1225; color: #3a4560; cursor: not-allowed; }
-  .lvl .bombMark { position: absolute; top: 2px; right: 3px; font-size: 0.55rem; }
-  @keyframes pulse { 0%, 100% { box-shadow: 0 0 12px rgba(233,69,96,0.7); } 50% { box-shadow: 0 0 22px rgba(233,69,96,1); } }
+  .lvl { aspect-ratio: 1; background: #111; color: #888; font-weight: bold; font-size: 1rem; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #333; transition: transform 0.1s, background 0.2s; position: relative; font-family: 'Pricedown', sans-serif; }
+  .lvl:hover:not(.locked) { background: #222; border-color: #f39c12; transform: scale(1.05); }
+  .lvl.done { background: #27ae60; color: #fff; border-color: #2ecc71; }
+  .lvl.current { background: #f39c12; color: #000; border-color: #fff; box-shadow: 0 0 15px rgba(243, 156, 18, 0.6); }
+  .lvl.locked { background: #000; color: #333; cursor: not-allowed; }
+  .lvl .bombMark { position: absolute; top: 2px; right: 3px; font-size: 0.6rem; }
 
-  .legend { display: flex; gap: 14px; font-size: 0.72rem; color: #7a8ba8; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
+  .legend { display: flex; gap: 14px; font-size: 0.8rem; color: #888; margin-top: 4px; flex-wrap: wrap; justify-content: center; font-weight: bold; }
   .legend span { display: flex; align-items: center; gap: 4px; }
-  .legend .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
-  .btnRow { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 6px; width: 100%; }
+  .legend .dot { width: 12px; height: 12px; display: inline-block; border: 1px solid #555; }
+  .btnRow { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 10px; width: 100%; }
   .btnRow button { flex: 1; min-width: 120px; }
 
-  #authModal { position: absolute; inset: 0; background: rgba(13, 13, 26, 0.98); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 20; border-radius: 10px; gap: 10px; padding: 20px; }
+  /* Модалка входа */
+  #authModal { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.98); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 20; gap: 10px; padding: 20px; }
   #authModal.show { display: flex; }
-  .auth-box { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 280px; background: #16213e; padding: 20px; border-radius: 12px; border: 1px solid #0f3460; }
-  .auth-box input { padding: 10px 14px; border-radius: 8px; border: 1px solid #0f3460; background: #0a1225; color: #eee; font-size: 1rem; outline: none; }
-  .auth-box input:focus { border-color: #e94560; }
-  .auth-box button { padding: 10px; font-size: 1rem; background: #e94560; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-  .auth-box button:hover { background: #ff6b6b; }
-  .auth-error { color: #ff4d4d; font-size: 0.8rem; min-height: 1.2em; text-align: center; margin-top: -4px; }
-  .close-auth { font-size: 0.8rem; color: #7a8ba8; cursor: pointer; text-decoration: underline; text-align: center; margin-top: 4px; }
+  .auth-box { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 300px; background: #111; padding: 20px; border: 2px solid #f39c12; box-shadow: 0 0 20px rgba(243, 156, 18, 0.2); }
+  .auth-box h2 { font-family: 'Pricedown', sans-serif; color: #f39c12; font-size: 1.8rem; text-align: center; }
+  .auth-box input { padding: 10px 14px; border: 2px solid #444; background: #000; color: #f39c12; font-size: 1.1rem; outline: none; font-family: 'Pricedown', sans-serif; }
+  .auth-box input:focus { border-color: #f39c12; }
+  .auth-box button { padding: 12px; font-size: 1.2rem; background: #f39c12; color: #000; border: none; cursor: pointer; font-weight: bold; font-family: 'Pricedown', sans-serif; }
+  .auth-box button:hover { background: #e67e22; }
+  .auth-error { color: #e74c3c; font-size: 0.9rem; min-height: 1.2em; text-align: center; font-weight: bold; }
+  .close-auth { font-size: 0.9rem; color: #888; cursor: pointer; text-align: center; margin-top: 4px; text-decoration: underline; }
+  .close-auth:hover { color: #fff; }
 
+  /* Магазин */
   .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 380px; margin-top: 10px; }
-  .shop-item { background: #16213e; border: 1px solid #0f3460; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
-  .shop-item:hover { border-color: #4ecca3; transform: translateY(-2px); }
-  .shop-item.active { border-color: #e94560; background: #1f2a4a; }
-  .shop-item.locked { opacity: 0.7; }
-  .shop-item .bg-preview { width: 100%; height: 60px; border-radius: 6px; border: 1px solid #0f3460; }
-  .shop-item .price { font-size: 0.8rem; font-weight: bold; color: #e94560; }
-  .shop-item .name { font-size: 0.85rem; font-weight: bold; color: #eee; }
+  .shop-item { background: #111; border: 2px solid #333; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; position: relative; }
+  .shop-item:hover { border-color: #f39c12; transform: translateY(-2px); }
+  .shop-item.active { border-color: #f39c12; background: #222; box-shadow: inset 0 0 10px rgba(243, 156, 18, 0.2); }
+  .shop-item.locked { opacity: 0.6; }
+  .shop-item .bg-preview { width: 100%; height: 60px; border: 2px solid #333; }
+  .shop-item .price { font-size: 1rem; font-weight: bold; color: #f1c40f; font-family: 'Pricedown', sans-serif; }
+  .shop-item .name { font-size: 0.95rem; font-weight: bold; color: #fff; font-family: 'Pricedown', sans-serif; text-transform: uppercase; }
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
-  <h1>🎯 Поймай квадрат</h1>
-  <div class="sub">Проходи уровни или играй в бесконечность!</div>
+  <h1 class="gta-font">GTA: Поймай Квадрат</h1>
+  <div class="sub">Los Santos, San Andreas</div>
 
   <div id="topPanel"></div>
 
   <div id="hud" style="display:none;">
-    <div class="stat"><div class="label">Уровень/Режим</div><div class="value" id="levelVal">1</div></div>
+    <div class="stat"><div class="label">Уровень</div><div class="value" id="levelVal">1</div></div>
     <div class="stat"><div class="label">Очки</div><div class="value" id="score">0</div></div>
     <div class="stat"><div class="label">Цель/Время</div><div class="value" id="goal">0</div></div>
     <div class="stat"><div class="label">Время</div><div class="value" id="time">30</div></div>
-    <div class="stat"><div class="label">Монеты</div><div class="value" id="coinHud">0</div></div>
+    <div class="stat"><div class="label">Деньги</div><div class="value" id="coinHud">$0</div></div>
   </div>
 
   <div id="timebar-wrap" style="display:none;"><div id="timebar"></div></div>
 
   <div id="controlBar" style="visibility:hidden;">
-    <div id="comboBadge">🔥 COMBO x1</div>
+    <div id="comboBadge">COMBO x1</div>
     <div id="controlsRight">
       <button id="pauseBtn">⏸ Пауза</button>
       <button id="settingsBtn">⚙ Меню</button>
@@ -151,19 +171,19 @@
     <div id="overlay"></div>
 
     <div id="authModal">
-      <h2 id="authTitle" style="color:#4ecca3">Вход</h2>
       <div class="auth-box">
-        <input type="text" id="authUser" placeholder="Логин" maxlength="15" autocomplete="off">
+        <h2>Угон аккаунта</h2>
+        <input type="text" id="authUser" placeholder="Ник" maxlength="15" autocomplete="off">
         <input type="password" id="authPass" placeholder="Пароль" maxlength="20">
         <div class="auth-error" id="authError"></div>
-        <button id="authSubmitBtn">Войти</button>
-        <div class="close-auth" id="closeAuthBtn">Закрыть</div>
+        <button id="authSubmitBtn">Взломать</button>
+        <div class="close-auth" id="closeAuthBtn">Отмена</div>
       </div>
     </div>
   </div>
 
 <script>
-    const firebaseConfig = {
+  const firebaseConfig = {
     apiKey: "AIzaSyCZ-1lTVrL_5xYX7-_8EDBxC_1tsj-ayRA",
     authDomain: "yrik-0gameblock.firebaseapp.com",
     databaseURL: "https://yrik-0gameblock-default-rtdb.firebaseio.com", 
@@ -200,11 +220,11 @@
   const controlBar = document.getElementById('controlBar');
 
   const THEMES = {
-    default: { name: 'Стандарт', price: 0, bg: '#16213e', arena: '#0d0d1a' },
-    neon: { name: 'Неон', price: 100, bg: '#0a001a', arena: '#1a0033' },
-    space: { name: 'Космос', price: 250, bg: '#050510', arena: '#101020' },
-    forest: { name: 'Лес', price: 500, bg: '#0a1a0a', arena: '#1a2e1a' },
-    lava: { name: 'Лава', price: 1000, bg: '#1a0000', arena: '#330000' }
+    default: { name: 'Los Santos', price: 0, bg: '#111', arena: '#050505' },
+    neon: { name: 'Vice City', price: 100, bg: '#0a001a', arena: '#1a0033' },
+    space: { name: 'Area 69', price: 250, bg: '#050510', arena: '#101020' },
+    forest: { name: 'Whetstone', price: 500, bg: '#0a1a0a', arena: '#1a2e1a' },
+    lava: { name: 'San Fierro', price: 1000, bg: '#1a0000', arena: '#330000' }
   };
 
   let currentUser = null;
@@ -212,21 +232,22 @@
   let progress = { unlocked: 1, best: {}, coins: 0, ownedThemes: ['default'] };
   let isEndless = false;
 
-  function updateCoinHud() { coinHud.textContent = progress.coins; }
+  function updateCoinHud() { coinHud.textContent = '$' + progress.coins; }
 
   function updateTheme() {
     const t = THEMES[settings.theme] || THEMES.default;
-    document.body.style.background = t.bg;
-    arena.style.background = t.arena;
+    document.body.style.backgroundColor = t.bg;
+    arena.style.backgroundImage = `radial-gradient(circle at 50% 50%, ${t.arena} 0%, #000 100%)`;
+    
     if (settings.theme === 'neon') {
       arena.style.borderColor = '#e94560';
-      arena.style.boxShadow = '0 0 20px #e94560';
+      arena.style.boxShadow = '0 0 30px #e94560';
     } else if (settings.theme === 'space') {
       arena.style.borderColor = '#4ecca3';
-      arena.style.boxShadow = '0 0 20px #4ecca3';
+      arena.style.boxShadow = '0 0 30px #4ecca3';
     } else {
-      arena.style.borderColor = '#0f3460';
-      arena.style.boxShadow = '0 10px 40px rgba(0,0,0,0.5)';
+      arena.style.borderColor = '#f39c12';
+      arena.style.boxShadow = '0 0 30px rgba(243, 156, 18, 0.2)';
     }
   }
 
@@ -234,12 +255,12 @@
     if (currentUser) {
       topPanel.innerHTML = `
         <div class="user-profile">
-          <span>Игрок: <b>${currentUser}</b> | 🪙 <b>${progress.coins}</b></span>
+          <span>Игрок: <b>${currentUser}</b> | 💵 <b>$${progress.coins}</b></span>
           <button class="auth-btn" id="logoutBtn">Выйти</button>
         </div>
       `;
       document.getElementById('logoutBtn').onclick = () => {
-        if (confirm('Выйти из аккаунта?')) {
+        if (confirm('Свалить из Лос-Сантоса?')) {
           sfx.ui(); currentUser = null; localStorage.removeItem('catchCurrentUser');
           progress = { unlocked: 1, best: {}, coins: 0, ownedThemes: ['default'] };
           settings = { volume: 0.5, muted: false, theme: 'default' };
@@ -259,7 +280,7 @@
   let isLoginMode = true;
   function openAuthModal(loginMode) {
     isLoginMode = loginMode;
-    document.getElementById('authTitle').textContent = isLoginMode ? 'Вход' : 'Регистрация';
+    document.querySelector('.auth-box h2').textContent = isLoginMode ? 'Угон аккаунта' : 'Новый бандит';
     document.getElementById('authSubmitBtn').textContent = isLoginMode ? 'Войти' : 'Создать';
     document.getElementById('authUser').value = '';
     document.getElementById('authPass').value = '';
@@ -415,7 +436,7 @@
   }
 
   let bombEl = null; let bombTimeout = null;
-  let bonusEl = null; let bonusTimeout = null; // Новые переменные для бонусов
+  let bonusEl = null; let bonusTimeout = null;
 
   function clearBomb() { if (bombEl) { bombEl.remove(); bombEl = null; } if (bombTimeout) { clearTimeout(bombTimeout); bombTimeout = null; } }
   function clearBonus() { if (bonusEl) { bonusEl.remove(); bonusEl = null; } if (bonusTimeout) { clearTimeout(bonusTimeout); bonusTimeout = null; } }
@@ -427,19 +448,18 @@
     return LEVELS[currentLevel - 1];
   }
 
-  // Бонусы
   function maybeSpawnBonus() {
     const c = levelCfg();
     if (!running || paused || c.bombChance <= 0) return;
     clearBonus();
-    if (Math.random() > 0.2) { // 20% шанс на бонус
+    if (Math.random() > 0.2) { 
       bonusTimeout = setTimeout(maybeSpawnBonus, 1500 + Math.random() * 1500); return;
     }
     
     const isStar = Math.random() > 0.5;
     bonusEl = document.createElement('div');
     bonusEl.className = 'bonus ' + (isStar ? 'star' : 'time');
-    bonusEl.textContent = isStar ? '★' : '⏳';
+    bonusEl.textContent = isStar ? '⭐' : '⏳';
     bonusEl.dataset.type = isStar ? 'star' : 'time';
     
     const maxX = arena.clientWidth - 40; const maxY = arena.clientHeight - 40;
@@ -448,7 +468,6 @@
     bonusEl.addEventListener('mousedown', onBonusHit); bonusEl.addEventListener('touchstart', onBonusHit, { passive: false });
     arena.appendChild(bonusEl);
     
-    // Бонус исчезает через 3-5 сек
     bonusTimeout = setTimeout(() => {
       clearBonus(); if (running && !paused) maybeSpawnBonus();
     }, 3000 + Math.random() * 2000);
@@ -603,14 +622,14 @@
       }
       sfx.lose();
       overlay.innerHTML = `
-        <h2 style="color:#e94560">💀 Игра окончена</h2>
+        <h2>WASTED</h2>
         <p>Бесконечный режим</p>
         <div class="big">${score}</div>
         <p>Рекорд: <b>${progress.best['endless'] || 0}</b></p>
-        ${coinsEarned > 0 ? `<p style="color:#4ecca3">Заработано: 🪙 ${coinsEarned}</p>` : ''}
+        ${coinsEarned > 0 ? `<p style="color:#27ae60">Заработано: $${coinsEarned}</p>` : ''}
         <div class="btnRow">
           <button class="action-btn" id="againBtn">Ещё раз</button>
-          <button class="action-btn" id="menuBtn" style="background:#0f3460;">☰ Меню</button>
+          <button class="action-btn" id="menuBtn" style="background:#222; color:#f39c12;">В меню</button>
         </div>
       `;
       overlay.classList.remove('hidden');
@@ -638,15 +657,15 @@
     if (passed) {
       sfx.win(); const isLast = currentLevel === 50;
       overlay.innerHTML = `
-        <h2>${isLast ? '🏆 Все 50 уровней пройдены!' : '✅ Уровень пройден!'}</h2>
+        <h2>MISSION PASSED</h2>
         <p>Уровень ${currentLevel} · Очки</p>
         <div class="big">${score} / ${c.goal}</div>
-        <p>Заработано: 🪙 ${coinsEarned}</p>
-        ${currentUser ? `<p>Рекорд уровня: <b>${progress.best[currentLevel]}</b></p>` : ''}
+        <p style="color:#f1c40f;">Заработано: $${coinsEarned}</p>
+        ${currentUser ? `<p>Рекорд: <b>${progress.best[currentLevel]}</b></p>` : ''}
         <div class="btnRow">
-          ${!isLast ? `<button class="action-btn" id="nextBtn">Дальше →</button>` : ''}
-          <button class="action-btn" id="againBtn" style="background:#0f3460;">Ещё раз</button>
-          <button class="action-btn" id="menuBtn" style="background:#0f3460;">☰ Меню</button>
+          ${!isLast ? `<button class="action-btn" id="nextBtn">Дальше</button>` : ''}
+          <button class="action-btn" id="againBtn" style="background:#222; color:#f39c12;">Ещё раз</button>
+          <button class="action-btn" id="menuBtn" style="background:#222; color:#f39c12;">В меню</button>
         </div>
       `;
       overlay.classList.remove('hidden');
@@ -656,13 +675,13 @@
     } else {
       sfx.lose();
       overlay.innerHTML = `
-        <h2 style="color:#e94560">❌ Не хватило очков</h2>
+        <h2 style="color:#e74c3c;">MISSION FAILED</h2>
         <p>Уровень ${currentLevel} · Цель: ${c.goal}</p>
-        <div class="big" style="color:#b0b8c8">${score} / ${c.goal}</div>
-        <p>Не хватило <b style="color:#e94560">${c.goal - score}</b> очков</p>
+        <div class="big" style="color:#888;">${score} / ${c.goal}</div>
+        <p>Не хватило <b style="color:#e74c3c;">${c.goal - score}</b> очков</p>
         <div class="btnRow">
           <button class="action-btn" id="retryBtn">Ещё раз</button>
-          <button class="action-btn" id="menuBtn" style="background:#0f3460;">☰ Меню</button>
+          <button class="action-btn" id="menuBtn" style="background:#222; color:#f39c12;">В меню</button>
         </div>
       `;
       overlay.classList.remove('hidden');
@@ -678,13 +697,13 @@
     if (delta < 700) combo++; else combo = 0;
     if (combo > 0 && combo % 3 === 0) {
       comboMult = Math.min(1 + Math.floor(combo / 3) * 0.5, 4); sfx.combo();
-      comboBadge.textContent = `🔥 COMBO x${comboMult.toFixed(1)}`;
+      comboBadge.textContent = `COMBO x${comboMult.toFixed(1)}`;
       comboBadge.classList.add('show');
     }
     const points = Math.round(1 * comboMult);
     score += points; scoreEl.textContent = score;
     const rect = arena.getBoundingClientRect();
-    spawnEffect(e.clientX - rect.left, e.clientY - rect.top, '+' + points, 'good');
+    spawnEffect(e.clientX - rect.left, e.clientY - rect.top, '+$' + points, 'good');
     sfx.hit(combo); moveTarget();
   }
 
@@ -708,11 +727,11 @@
     controlBar.style.visibility = 'hidden';
     
     overlay.innerHTML = `
-      <h2 style="margin-top:10px; font-size:1.6rem; color:#4ecca3;">🎯 Поймай квадрат</h2>
-      <p>Зарабатывай монеты и открывай фоны!</p>
+      <h2 style="margin-top:10px; font-size:2.2rem;">GTA: Поймай Квадрат</h2>
+      <p>Los Santos, San Andreas</p>
       
       <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:10px;">
-        <span style="font-size:1.2rem; color:#e94560;">🪙 Монеты: <b>${progress.coins}</b></span>
+        <span style="font-size:1.4rem; color:#f1c40f;">💵 Бабки: <b>$${progress.coins}</b></span>
       </div>
 
       <div class="settings">
@@ -727,12 +746,12 @@
       </div>
 
       <div class="btnRow" style="flex-direction:column; gap:10px; margin-top:15px; width:100%; max-width:380px;">
-        <button class="action-btn" id="playBtn" style="font-size:1.2rem;">▶ Играть уровень ${progress.unlocked}</button>
-        <button class="action-btn" id="endlessBtn" style="background:#4ecca3; color:#0d0d1a;">♾ Бесконечный режим</button>
-        <button class="action-btn" id="shopBtn" style="background:#0f3460;">🛒 Магазин</button>
-        <button class="action-btn" id="levelsBtn" style="background:#0f3460; font-size:0.9rem;">☰ Выбор уровня</button>
+        <button class="action-btn" id="playBtn" style="font-size:1.4rem;">▶ Миссия ${progress.unlocked}</button>
+        <button class="action-btn" id="endlessBtn" style="background:#27ae60; color:#fff;">♾ Режим Выживания</button>
+        <button class="action-btn" id="shopBtn" style="background:#222; color:#f39c12;">🛒 Ammu-Nation</button>
+        <button class="action-btn" id="levelsBtn" style="background:#222; color:#f39c12; font-size:1rem;">☰ Карта</button>
       </div>
-      ${!currentUser ? `<p style="color:#e94560; font-size:0.8rem; margin-top:10px;">Войди в аккаунт, чтобы зарабатывать монеты!</p>` : ''}
+      ${!currentUser ? `<p style="color:#e74c3c; font-size:0.9rem; margin-top:10px;">Войди в аккаунт, чтобы зарабатывать бабки!</p>` : ''}
     `;
     overlay.classList.remove('hidden');
 
@@ -762,8 +781,8 @@
 
   function openShop() {
     overlay.innerHTML = `
-      <h2 style="color:#e94560; margin-top:10px;">🛒 Магазин фонов</h2>
-      <p>У тебя <b style="color:#4ecca3;">🪙 ${progress.coins}</b> монет.</p>
+      <h2 style="color:#f39c12; margin-top:10px;">Ammu-Nation</h2>
+      <p>У тебя <b style="color:#27ae60;">$${progress.coins}</b> бабок.</p>
       
       <div class="shop-grid">
         ${Object.entries(THEMES).map(([key, t]) => {
@@ -771,18 +790,18 @@
           const isActive = settings.theme === key;
           return `
             <div class="shop-item ${isActive ? 'active' : ''} ${!isOwned ? 'locked' : ''}" data-theme="${key}">
-              <div class="bg-preview" style="background:${t.bg};"></div>
+              <div class="bg-preview" style="background:${t.arena};"></div>
               <div class="name">${t.name}</div>
               ${isOwned 
-                ? `<div class="price" style="color:#4ecca3;">${isActive ? 'Выбран' : 'Выбрать'}</div>`
-                : `<div class="price">🪙 ${t.price}</div>`
+                ? `<div class="price" style="color:#27ae60;">${isActive ? 'Выбран' : 'Выбрать'}</div>`
+                : `<div class="price">$${t.price}</div>`
               }
             </div>
           `;
         }).join('')}
       </div>
       
-      <button class="action-btn" id="backToMenuBtn" style="margin-top:15px; background:#0f3460;">← Назад</button>
+      <button class="action-btn" id="backToMenuBtn" style="margin-top:15px; background:#222; color:#f39c12;">← Назад</button>
     `;
 
     document.getElementById('backToMenuBtn').onclick = startMenu;
@@ -812,7 +831,7 @@
             openShop();
           } else {
             sfx.lose();
-            alert("Не хватает монет!");
+            alert("Не хватает бабок!");
           }
         }
       };
@@ -831,14 +850,14 @@
     }).join('');
 
     overlay.innerHTML = `
-      <h2 style="margin-top:10px;">Выбор уровня</h2>
+      <h2 style="margin-top:10px;">Карта Лос-Сантоса</h2>
       <div id="levelGrid">${cells}</div>
       <div class="legend">
-        <span><span class="dot" style="background:#1a5a3a;border:1px solid #4ecca3"></span>Пройден</span>
-        <span><span class="dot" style="background:#e94560"></span>Текущий</span>
-        <span><span class="dot" style="background:#0a1225;border:1px solid #3a4560"></span>Закрыт</span>
+        <span><span class="dot" style="background:#27ae60;border:1px solid #2ecc71"></span>Пройдено</span>
+        <span><span class="dot" style="background:#f39c12"></span>Текущая</span>
+        <span><span class="dot" style="background:#000;border:1px solid #333"></span>Закрыто</span>
       </div>
-      <button class="action-btn" id="backToMenuBtn" style="margin-top:15px; background:#0f3460;">← Назад</button>
+      <button class="action-btn" id="backToMenuBtn" style="margin-top:15px; background:#222; color:#f39c12;">← Назад</button>
     `;
 
     document.getElementById('backToMenuBtn').onclick = startMenu;
@@ -846,7 +865,7 @@
     overlay.querySelectorAll('.lvl').forEach(cell => {
       cell.onclick = () => {
         const lvl = Number(cell.dataset.level);
-        if (lvl > progress.unlocked) { cell.style.borderColor = '#e94560'; setTimeout(() => cell.style.borderColor = 'transparent', 200); playTone(200, 0.1, 'sawtooth', 0.1); return; }
+        if (lvl > progress.unlocked) { cell.style.borderColor = '#e74c3c'; setTimeout(() => cell.style.borderColor = 'transparent', 200); playTone(200, 0.1, 'sawtooth', 0.1); return; }
         sfx.ui(); startLevel(lvl);
       };
     });
