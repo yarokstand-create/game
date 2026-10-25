@@ -147,20 +147,17 @@
   </div>
 
 <script>
-  // ============================================================
-  // ТВОЙ КОНФИГ FIREBASE
-  // ============================================================
+ 
   const firebaseConfig = {
-    apiKey: "AIzaSyCauS0WubVrsg6R1CdTxsDFl50YJpLtbnY",
-    authDomain: "test-elc45.firebaseapp.com",
-    databaseURL: "https://test-elc45-default-rtdb.firebaseio.com",
-    projectId: "test-elc45",
-    storageBucket: "test-elc45.firebasestorage.app",
-    messagingSenderId: "1060491581005",
-    appId: "1:1060491581005:web:a7d24cd7cd26d5b2a7ae04",
-    measurementId: "G-CY138CKQQJ"
-  };
-
+    apiKey: "AIzaSyCZ-1lTVrL_5xYX7-_8EDBxC_1tsj-ayRA",
+    authDomain: "yrik-0gameblock.firebaseapp.com",
+    databaseURL: "https://yrik-0gameblock-default-rtdb.firebaseio.com",
+    projectId: "yrik-0gameblock",
+    storageBucket: "yrik-0gameblock.firebasestorage.app",
+    messagingSenderId: "155342712918",
+    appId: "1:155342712918:web:de41d862996700068d0bf7"
+  };  
+ 
   let db = null;
   try {
     if (typeof firebase !== 'undefined') {
@@ -575,11 +572,9 @@
     startMenu();
   });
 
-  // Инициализация при загрузке
   updateTopPanel();
   startMenu(); 
 
-  // Проверка сохраненного пользователя
   const savedUser = localStorage.getItem('catchCurrentUser');
   if (savedUser && db) {
     db.ref('users/' + savedUser).once('value').then(snap => {
