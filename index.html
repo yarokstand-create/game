@@ -1,46 +1,59 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head><script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Поймай квадрат — 50 уровней (Online)</title>
+<title>Поймай квадрат — Ultimate</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: system-ui, -apple-system, sans-serif;
-    background: radial-gradient(circle at 50% 0%, #1f2a4a, #0d0d1a 70%);
+    background: #0d0d1a;
     color: #eee;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     min-height: 100vh; padding: 16px; user-select: none;
+    transition: background 0.5s ease;
   }
+  
+  /* --- ФОНЫ --- */
+  .bg-default { background: radial-gradient(circle at 50% 0%, #1f2a4a, #0d0d1a 70%); }
+  .bg-space { background: radial-gradient(circle at 50% 0%, #2a1f4a, #050510 70%); }
+  .bg-neon { background: radial-gradient(circle at 50% 0%, #1f4a3a, #05100a 70%); }
+  .bg-fire { background: radial-gradient(circle at 50% 0%, #4a1f1f, #100505 70%); }
+  .bg-matrix { background: radial-gradient(circle at 50% 0%, #1f4a1f, #051005 70%); }
+
   h1 { font-size: 1.5rem; margin-bottom: 6px; color: #e94560; letter-spacing: 1px; text-align: center; }
   .sub { font-size: 0.85rem; color: #7a8ba8; margin-bottom: 14px; text-align: center; }
 
-  #topPanel { width: 90vw; max-width: 500px; display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 10px; min-height: 30px; }
+  /* --- ВЕРХНЯЯ ПАНЕЛЬ --- */
+  #topPanel { width: 90vw; max-width: 500px; display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; min-height: 30px; }
+  .user-profile { font-size: 0.85rem; color: #7a8ba8; display: flex; align-items: center; gap: 10px; }
+  .user-profile b { color: #4ecca3; font-size: 1rem; }
   .auth-btn { background: #0f3460; color: #eee; border: 1px solid #1a4a7a; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: bold; transition: background 0.2s; }
   .auth-btn:hover { background: #1a4a7a; }
   .auth-btn.primary { background: #e94560; border-color: #ff6b6b; }
-  .auth-btn.primary:hover { background: #ff6b6b; }
-  .user-profile { font-size: 0.85rem; color: #7a8ba8; display: flex; align-items: center; gap: 10px; }
-  .user-profile b { color: #4ecca3; font-size: 1rem; }
 
-  #hud { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center; }
+  /* --- HUD (Скрыт в меню) --- */
+  #hud { display: none; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center; width: 100%; }
+  #hud.active { display: flex; }
   .stat { background: #16213e; border: 1px solid #0f3460; border-radius: 10px; padding: 8px 16px; text-align: center; min-width: 80px; }
   .stat .label { font-size: 0.7rem; color: #7a8ba8; text-transform: uppercase; letter-spacing: 0.5px; }
   .stat .value { font-size: 1.3rem; font-weight: bold; color: #4ecca3; }
 
-  #timebar-wrap { width: 90vw; max-width: 500px; height: 10px; background: #16213e; border-radius: 6px; overflow: hidden; margin-bottom: 10px; border: 1px solid #0f3460; }
+  #timebar-wrap { display: none; width: 90vw; max-width: 500px; height: 10px; background: #16213e; border-radius: 6px; overflow: hidden; margin-bottom: 10px; border: 1px solid #0f3460; }
+  #timebar-wrap.active { display: block; }
   #timebar { height: 100%; width: 100%; background: linear-gradient(90deg, #4ecca3, #e94560); transition: width 0.1s linear; border-radius: 6px; }
 
-  #controlBar { width: 90vw; max-width: 500px; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; min-height: 40px; }
+  /* --- ПАНЕЛЬ ПАУЗЫ (Скрыта в меню) --- */
+  #controlBar { display: none; width: 90vw; max-width: 500px; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; min-height: 40px; }
+  #controlBar.active { display: flex; }
   #comboBadge { background: rgba(233,69,96,0.9); color: #fff; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; opacity: 0; transform: translateY(-4px); transition: all 0.2s; box-shadow: 0 0 16px rgba(233,69,96,0.5); }
   #comboBadge.show { opacity: 1; transform: translateY(0); }
   #controlsRight { display: flex; gap: 8px; margin-left: auto; }
   #controlsRight button { padding: 8px 14px; font-size: 0.85rem; background: #0f3460; color: #eee; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
   #controlsRight button:hover { background: #1a4a7a; }
 
-  #arena { position: relative; width: 90vw; max-width: 500px; height: 500px; max-height: 55vh; background: #16213e; border: 2px solid #0f3460; border-radius: 12px; overflow: hidden; cursor: crosshair; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+  #arena { position: relative; width: 90vw; max-width: 500px; height: 500px; max-height: 55vh; background: rgba(22, 33, 62, 0.8); border: 2px solid #0f3460; border-radius: 12px; overflow: hidden; cursor: crosshair; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
 
   #target { position: absolute; background: linear-gradient(135deg, #e94560, #ff6b6b); border-radius: 10px; box-shadow: 0 0 20px rgba(233,69,96,0.7); will-change: left, top, width, height; transition: width 0.2s, height 0.2s; }
   #target:active { transform: scale(0.92); }
@@ -58,15 +71,37 @@
   .explosion { position: absolute; border-radius: 50%; pointer-events: none; background: radial-gradient(circle, rgba(255,200,0,0.95), rgba(255,60,0,0.5) 50%, transparent 75%); animation: explode 0.5s ease-out forwards; z-index: 7; }
   @keyframes explode { 0% { opacity: 1; transform: translate(-50%,-50%) scale(0.3); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(2.2); } }
 
-  #overlay { position: absolute; inset: 0; background: rgba(13, 13, 26, 0.98); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px; text-align: center; padding: 18px; z-index: 10; overflow-y: auto; border-radius: 10px; }
+  /* --- ОВЕРЛЕЙ (Меню) --- */
+  #overlay { position: absolute; inset: 0; background: rgba(13, 13, 26, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px; text-align: center; padding: 18px; z-index: 10; overflow-y: auto; border-radius: 10px; }
   #overlay.hidden { display: none; }
-  #overlay h2 { color: #4ecca3; font-size: 1.4rem; }
+  #overlay h2 { color: #4ecca3; font-size: 1.4rem; margin-top: 10px; }
   #overlay p { color: #b0b8c8; line-height: 1.45; font-size: 0.9rem; }
   #overlay .big { font-size: 2.2rem; color: #e94560; font-weight: bold; }
-  button.action-btn { padding: 12px 32px; font-size: 1.05rem; font-weight: bold; background: #e94560; color: #fff; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.1s, background 0.2s; }
-  button.action-btn:hover { background: #ff6b6b; }
-  button.action-btn:active { transform: scale(0.96); }
 
+  /* --- Меню и кнопки --- */
+  .menu-grid { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 380px; }
+  button.menu-btn { padding: 14px; font-size: 1.1rem; font-weight: bold; background: #e94560; color: #fff; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.1s, background 0.2s; }
+  button.menu-btn:hover { background: #ff6b6b; transform: scale(1.02); }
+  button.menu-btn.secondary { background: #0f3460; border: 1px solid #1a4a7a; }
+  button.menu-btn.secondary:hover { background: #1a4a7a; }
+  button.menu-btn.buy { background: #4ecca3; color: #0d0d1a; }
+  button.menu-btn.buy:hover { background: #6bf0c0; }
+  button.menu-btn.equipped { background: #0a1225; color: #4ecca3; border: 2px solid #4ecca3; cursor: default; }
+
+  .shop-item { background: #16213e; border: 1px solid #0f3460; border-radius: 12px; padding: 12px; display: flex; justify-content: space-between; align-items: center; width: 100%; }
+  .shop-item .info { text-align: left; }
+  .shop-item .info h4 { color: #eee; margin-bottom: 4px; }
+  .shop-item .info span { color: #4ecca3; font-weight: bold; font-size: 0.85rem; }
+
+  #levelGrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 380px; margin-top: 10px; }
+  .lvl { aspect-ratio: 1; border-radius: 8px; background: #0f3460; color: #b0b8c8; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid transparent; transition: transform 0.1s, background 0.2s; position: relative; }
+  .lvl:hover:not(.locked) { background: #1a4a7a; transform: scale(1.05); }
+  .lvl.done { background: #1a5a3a; color: #4ecca3; border-color: #4ecca3; }
+  .lvl.current { background: #e94560; color: #fff; box-shadow: 0 0 12px rgba(233,69,96,0.7); animation: pulse 1.5s infinite; }
+  .lvl.locked { background: #0a1225; color: #3a4560; cursor: not-allowed; }
+  @keyframes pulse { 0%, 100% { box-shadow: 0 0 12px rgba(233,69,96,0.7); } 50% { box-shadow: 0 0 22px rgba(233,69,96,1); } }
+
+  /* Настройки */
   .settings { width: 100%; max-width: 380px; background: #16213e; border: 1px solid #0f3460; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; text-align: left; }
   .row { display: flex; flex-direction: column; gap: 6px; }
   .row label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.7px; color: #7a8ba8; font-weight: 600; }
@@ -78,47 +113,32 @@
   #muteBtn { padding: 6px 10px; font-size: 1rem; background: #0f3460; border-radius: 8px; min-width: 44px; color: #fff; cursor: pointer; border: none; }
   #muteBtn:hover { background: #1a4a7a; }
 
-  #levelGrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 380px; }
-  .lvl { aspect-ratio: 1; border-radius: 8px; background: #0f3460; color: #b0b8c8; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid transparent; transition: transform 0.1s, background 0.2s, border-color 0.2s; position: relative; }
-  .lvl:hover:not(.locked) { background: #1a4a7a; transform: scale(1.05); }
-  .lvl.done { background: #1a5a3a; color: #4ecca3; border-color: #4ecca3; }
-  .lvl.current { background: #e94560; color: #fff; box-shadow: 0 0 12px rgba(233,69,96,0.7); animation: pulse 1.5s infinite; }
-  .lvl.locked { background: #0a1225; color: #3a4560; cursor: not-allowed; }
-  .lvl .bombMark { position: absolute; top: 2px; right: 3px; font-size: 0.55rem; }
-  @keyframes pulse { 0%, 100% { box-shadow: 0 0 12px rgba(233,69,96,0.7); } 50% { box-shadow: 0 0 22px rgba(233,69,96,1); } }
-
-  .legend { display: flex; gap: 14px; font-size: 0.72rem; color: #7a8ba8; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
-  .legend span { display: flex; align-items: center; gap: 4px; }
-  .legend .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
-  .btnRow { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
-
+  /* Модалка */
   #authModal { position: absolute; inset: 0; background: rgba(13, 13, 26, 0.98); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 20; border-radius: 10px; gap: 10px; padding: 20px; }
   #authModal.show { display: flex; }
   .auth-box { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 280px; background: #16213e; padding: 20px; border-radius: 12px; border: 1px solid #0f3460; }
   .auth-box input { padding: 10px 14px; border-radius: 8px; border: 1px solid #0f3460; background: #0a1225; color: #eee; font-size: 1rem; outline: none; }
   .auth-box input:focus { border-color: #e94560; }
   .auth-box button { padding: 10px; font-size: 1rem; background: #e94560; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-  .auth-box button:hover { background: #ff6b6b; }
   .auth-error { color: #ff4d4d; font-size: 0.8rem; min-height: 1.2em; text-align: center; margin-top: -4px; }
   .close-auth { font-size: 0.8rem; color: #7a8ba8; cursor: pointer; text-decoration: underline; text-align: center; margin-top: 4px; }
 </style>
 
-<!-- ПОДКЛЮЧАЕМ ОФИЦИАЛЬНЫЙ FIREBASE SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
 </head>
-<body>
-  <h1>🎯 Поймай квадрат — 50 уровней</h1>
-  <div class="sub">Проходи уровни. С 10-го уровня появляются 💣 бомбы!</div>
+<body class="bg-default">
+
+  <h1>🎯 Поймай квадрат</h1>
+  <div class="sub">Зарабатывай очки и открывай новые фоны!</div>
 
   <div id="topPanel"></div>
 
   <div id="hud">
-    <div class="stat"><div class="label">Уровень</div><div class="value" id="levelVal">1</div></div>
+    <div class="stat"><div class="label">Режим</div><div class="value" id="modeVal">-</div></div>
     <div class="stat"><div class="label">Очки</div><div class="value" id="score">0</div></div>
-    <div class="stat"><div class="label">Цель</div><div class="value" id="goal">0</div></div>
-    <div class="stat"><div class="label">Время</div><div class="value" id="time">30</div></div>
+    <div class="stat"><div class="label">Цель / Рекорд</div><div class="value" id="goal">0</div></div>
+    <div class="stat"><div class="label">Время</div><div class="value" id="time">0</div></div>
   </div>
 
   <div id="timebar-wrap"><div id="timebar"></div></div>
@@ -148,17 +168,19 @@
   </div>
 
 <script>
- 
+  // ============================================================
+  // КОНФИГ FIREBASE
+  // ============================================================
   const firebaseConfig = {
     apiKey: "AIzaSyCZ-1lTVrL_5xYX7-_8EDBxC_1tsj-ayRA",
-    authDomain: "yrik-0gameblock.firebaseapp.com",
-    databaseURL: "https://yrik-0gameblock-default-rtdb.firebaseio.com",
-    projectId: "yrik-0gameblock",
-    storageBucket: "yrik-0gameblock.firebasestorage.app",
+    authDomain: "yarik-0gameblock.firebaseapp.com",
+    databaseURL: "https://yarik-0gameblock-default-rtdb.firebaseio.com",
+    projectId: "yarik-0gameblock",
+    storageBucket: "yarik-0gameblock.firebasestorage.app",
     messagingSenderId: "155342712918",
     appId: "1:155342712918:web:de41d862996700068d0bf7"
-  };  
- 
+  };
+
   let db = null;
   try {
     if (typeof firebase !== 'undefined') {
@@ -168,6 +190,7 @@
   } catch (e) { console.error("Firebase не загрузился", e); }
   // ============================================================
 
+  const body     = document.body;
   const arena    = document.getElementById('arena');
   const target   = document.getElementById('target');
   const overlay  = document.getElementById('overlay');
@@ -176,33 +199,55 @@
   const scoreEl  = document.getElementById('score');
   const timeEl   = document.getElementById('time');
   const goalEl   = document.getElementById('goal');
-  const levelEl  = document.getElementById('levelVal');
+  const modeEl   = document.getElementById('modeVal');
   const timebar  = document.getElementById('timebar');
   const pauseBtn = document.getElementById('pauseBtn');
   const settingsBtn = document.getElementById('settingsBtn');
   const comboBadge = document.getElementById('comboBadge');
+  
+  const hudEl       = document.getElementById('hud');
+  const timebarWrap = document.getElementById('timebar-wrap');
+  const controlBar  = document.getElementById('controlBar');
 
   let currentUser = null;
   let settings = { volume: 0.5, muted: false };
-  let progress = { unlocked: 1, best: {} };
+  let progress = { unlocked: 1, best: {}, coins: 0, ownedBg: ['bg-default'], currentBg: 'bg-default' };
+
+  const BGS = {
+    'bg-default': { name: 'Стандарт', price: 0 },
+    'bg-space': { name: 'Космос', price: 100 },
+    'bg-neon': { name: 'Неон', price: 250 },
+    'bg-fire': { name: 'Огонь', price: 500 },
+    'bg-matrix': { name: 'Матрица', price: 1000 }
+  };
+
+  let gameMode = 'menu';
+
+  function applyBg(bgClass) { body.className = bgClass; }
+
+  function setGameUI(visible) {
+    if (visible) {
+      hudEl.classList.add('active'); timebarWrap.classList.add('active'); controlBar.classList.add('active');
+    } else {
+      hudEl.classList.remove('active'); timebarWrap.classList.remove('active'); controlBar.classList.remove('active');
+    }
+  }
 
   function updateTopPanel() {
     if (currentUser) {
       topPanel.innerHTML = `
         <div class="user-profile">
           <span>Игрок: <b>${currentUser}</b></span>
+          <span style="color:#ffd700; font-weight:bold;">💰 ${progress.coins || 0}</span>
           <button class="auth-btn" id="logoutBtn">Выйти</button>
         </div>
       `;
       document.getElementById('logoutBtn').onclick = () => {
         if (confirm('Выйти из аккаунта?')) {
-          sfx.ui();
-          currentUser = null;
-          localStorage.removeItem('catchCurrentUser');
-          progress = { unlocked: 1, best: {} };
+          sfx.ui(); currentUser = null; localStorage.removeItem('catchCurrentUser');
+          progress = { unlocked: 1, best: {}, coins: 0, ownedBg: ['bg-default'], currentBg: 'bg-default' };
           settings = { volume: 0.5, muted: false };
-          updateTopPanel();
-          startMenu();
+          applyBg('bg-default'); updateTopPanel(); startMenu();
         }
       };
     } else {
@@ -220,12 +265,9 @@
     isLoginMode = loginMode;
     document.getElementById('authTitle').textContent = isLoginMode ? 'Вход' : 'Регистрация';
     document.getElementById('authSubmitBtn').textContent = isLoginMode ? 'Войти' : 'Создать';
-    document.getElementById('authUser').value = '';
-    document.getElementById('authPass').value = '';
-    document.getElementById('authError').textContent = '';
-    authModal.classList.add('show');
+    document.getElementById('authUser').value = ''; document.getElementById('authPass').value = '';
+    document.getElementById('authError').textContent = ''; authModal.classList.add('show');
   }
-
   document.getElementById('closeAuthBtn').onclick = () => authModal.classList.remove('show');
   
   document.getElementById('authSubmitBtn').onclick = () => {
@@ -234,7 +276,7 @@
     const errEl = document.getElementById('authError');
     
     if (!u || !p) { errEl.textContent = 'Заполни все поля!'; return; }
-    if (!db) { errEl.textContent = 'Ошибка: Нет доступа к Firebase. Проверь интернет!'; return; }
+    if (!db) { errEl.textContent = 'Ошибка: Нет доступа к Firebase.'; return; }
 
     errEl.textContent = 'Загрузка...';
 
@@ -242,57 +284,49 @@
       db.ref('users/admin').once('value').then(snapshot => {
         let adminData = snapshot.val();
         if (!adminData) {
-          adminData = { password: p, settings: { volume: 0.5, muted: false }, progress: { unlocked: 50, best: {} } };
+          adminData = { password: p, settings: { volume: 0.5, muted: false }, progress: { unlocked: 50, best: {}, coins: 9999, ownedBg: Object.keys(BGS), currentBg: 'bg-default' } };
           db.ref('users/admin').set(adminData);
         } else {
-          adminData.progress.unlocked = 50;
+          adminData.progress.unlocked = 50; adminData.progress.coins = 9999;
+          if (!adminData.progress.ownedBg) adminData.progress.ownedBg = Object.keys(BGS);
           db.ref('users/admin').set(adminData);
         }
         loginSuccess(u, adminData);
-      }).catch(e => { errEl.textContent = 'Ошибка Firebase. Проверь правила (Rules)'; });
+      }).catch(e => { errEl.textContent = 'Ошибка Firebase.'; });
       return;
     }
 
     db.ref('users/' + u).once('value').then(snapshot => {
       const existingData = snapshot.val();
-
       if (isLoginMode) {
         if (!existingData) { errEl.textContent = 'Аккаунт не найден'; return; }
         if (existingData.password !== p) { errEl.textContent = 'Неверный пароль'; return; }
         loginSuccess(u, existingData);
       } else {
         if (existingData) { errEl.textContent = 'Этот ник уже занят'; return; }
-        const newData = { password: p, settings: { volume: 0.5, muted: false }, progress: { unlocked: 1, best: {} } };
-        db.ref('users/' + u).set(newData).then(() => {
-          loginSuccess(u, newData);
-        }).catch(e => { errEl.textContent = 'Ошибка записи! Открой Firebase -> Rules и разреши чтение/запись.'; });
+        const newData = { password: p, settings: { volume: 0.5, muted: false }, progress: { unlocked: 1, best: {}, coins: 0, ownedBg: ['bg-default'], currentBg: 'bg-default' } };
+        db.ref('users/' + u).set(newData).then(() => { loginSuccess(u, newData); }).catch(e => { errEl.textContent = 'Ошибка записи!'; });
       }
-    }).catch(e => {
-      errEl.textContent = 'Ошибка базы данных (Проверь правила Firebase)';
-    });
+    }).catch(e => { errEl.textContent = 'Ошибка базы данных'; });
   };
 
   function loginSuccess(username, data) {
-    currentUser = username;
-    localStorage.setItem('catchCurrentUser', username);
+    currentUser = username; localStorage.setItem('catchCurrentUser', username);
     settings = data.settings || { volume: 0.5, muted: false };
-    progress = data.progress || { unlocked: 1, best: {} };
-    
-    authModal.classList.remove('show');
-    updateTopPanel();
-    startMenu();
-    sfx.start();
+    progress = data.progress || { unlocked: 1, best: {}, coins: 0, ownedBg: ['bg-default'], currentBg: 'bg-default' };
+    if (!progress.coins) progress.coins = 0;
+    if (!progress.ownedBg) progress.ownedBg = ['bg-default'];
+    if (!progress.currentBg) progress.currentBg = 'bg-default';
+
+    applyBg(progress.currentBg); authModal.classList.remove('show');
+    updateTopPanel(); startMenu(); sfx.start();
   }
 
   function saveUserDataToDB() {
     if (!currentUser || !db) return;
     db.ref('users/' + currentUser).once('value').then(snap => {
       const existing = snap.val() || {};
-      db.ref('users/' + currentUser).set({
-        password: existing.password,
-        settings: settings,
-        progress: progress
-      });
+      db.ref('users/' + currentUser).set({ password: existing.password, settings: settings, progress: progress });
     });
   }
 
@@ -303,8 +337,14 @@
       const time = i <= 10 ? 30 : (i <= 25 ? 28 : (i <= 40 ? 26 : 24));
       const baseSize = Math.max(48, 70 - Math.floor(i * 0.4));
       const minSize  = Math.max(24, 44 - Math.floor(i * 0.3));
+      
       let bombChance = 0;
-      if (i >= 10) bombChance = Math.min(0.45, 0.12 + (i - 10) * 0.008);
+      if (i >= 10) {
+        if (i < 20) bombChance = 0.12 + (i - 10) * 0.008;
+        else bombChance = 0.22 + (i - 20) * 0.006; 
+      }
+      bombChance = Math.min(0.55, bombChance); 
+
       levels.push({ level: i, goal, time, baseSize, minSize, bombChance });
     }
     return levels;
@@ -320,6 +360,10 @@
   let running = false;
   let paused = false;
   let lastHit = 0;
+  
+  let endlessBaseSize = 70;
+  let endlessMinSize = 30;
+  let endlessBombChance = 0.18; 
 
   let audioCtx = null;
   function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
@@ -344,6 +388,7 @@
     tick:  () => playTone(880, 0.05, 'sine', 0.06),
     bomb:  () => { playTone(120, 0.4, 'sawtooth', 0.3, 40); playTone(80, 0.5, 'square', 0.2, 30); },
     ui:    () => playTone(520, 0.06, 'sine', 0.1),
+    buy:   () => { playTone(600, 0.1, 'sine', 0.15); setTimeout(()=>playTone(800, 0.15, 'sine', 0.15), 100); }
   };
 
   function spawnEffect(x, y, text, bad = false) {
@@ -367,10 +412,14 @@
 
   let bombEl = null; let bombTimeout = null;
   function clearBomb() { if (bombEl) { bombEl.remove(); bombEl = null; } if (bombTimeout) { clearTimeout(bombTimeout); bombTimeout = null; } }
-  function levelCfg() { return LEVELS[currentLevel - 1]; }
+  
+  function getCurrentCfg() {
+    if (gameMode === 'level') return LEVELS[currentLevel - 1];
+    return { time: 999, baseSize: endlessBaseSize, minSize: endlessMinSize, bombChance: endlessBombChance, goal: score };
+  }
 
   function maybeSpawnBomb() {
-    const c = levelCfg();
+    const c = getCurrentCfg();
     if (!running || paused || c.bombChance <= 0) return;
     clearBomb();
     if (Math.random() > c.bombChance) { bombTimeout = setTimeout(maybeSpawnBomb, 900 + Math.random() * 900); return; }
@@ -391,12 +440,26 @@
     spawnExplosion(e.clientX - rect.left, e.clientY - rect.top); spawnEffect(e.clientX - rect.left, e.clientY - rect.top, '💥 -5', true); sfx.bomb();
     score = Math.max(0, score - 5); scoreEl.textContent = score;
     combo = 0; comboMult = 1; comboBadge.classList.remove('show');
-    clearBomb(); if (running && !paused) bombTimeout = setTimeout(maybeSpawnBomb, 800);
+    clearBomb(); 
+
+    if (gameMode === 'endless') {
+      endGame();
+    } else {
+      if (running && !paused) bombTimeout = setTimeout(maybeSpawnBomb, 800);
+    }
   }
 
   function moveTarget() {
-    const c = levelCfg(); const progressRatio = 1 - (timeLeft / c.time);
-    const size = Math.max(c.minSize, c.baseSize - progressRatio * (c.baseSize - c.minSize));
+    const c = getCurrentCfg();
+    let size = c.baseSize;
+    if (gameMode === 'level') {
+      const progressRatio = 1 - (timeLeft / c.time);
+      size = Math.max(c.minSize, c.baseSize - progressRatio * (c.baseSize - c.minSize));
+    } else {
+      size = Math.max(c.minSize, c.baseSize - (score * 0.1));
+      if (size === c.minSize) size = c.minSize + (Math.random() * 4 - 2);
+    }
+    
     target.style.width = size + 'px'; target.style.height = size + 'px';
     const maxX = arena.clientWidth - size; const maxY = arena.clientHeight - size;
     target.style.left = Math.random() * maxX + 'px'; target.style.top  = Math.random() * maxY + 'px';
@@ -404,70 +467,136 @@
   }
 
   function startLevel(n) {
+    gameMode = 'level';
     currentLevel = n; const c = LEVELS[n - 1];
     initAudio(); sfx.start();
     score = 0; timeLeft = c.time; combo = 0; comboMult = 1;
     running = true; paused = false;
-    overlay.classList.add('hidden');
-    scoreEl.textContent = 0; goalEl.textContent = c.goal; levelEl.textContent = n;
+    overlay.classList.add('hidden'); setGameUI(true);
+    
+    modeEl.textContent = 'Уровень ' + n;
+    scoreEl.textContent = 0; goalEl.textContent = c.goal; 
     timeEl.textContent = c.time; timebar.style.width = '100%';
     comboBadge.classList.remove('show');
     target.style.display = 'block';
     pauseBtn.textContent = '⏸ Пауза';
     moveTarget(); clearBomb();
     if (c.bombChance > 0) bombTimeout = setTimeout(maybeSpawnBomb, 1200);
+    
     clearInterval(timer);
     timer = setInterval(() => {
       if (paused) return;
       timeLeft--; timeEl.textContent = timeLeft;
       timebar.style.width = (timeLeft / c.time * 100) + '%';
       if (timeLeft <= 5 && timeLeft > 0) sfx.tick();
-      if (timeLeft <= 0) endLevel();
+      if (timeLeft <= 0) endGame();
     }, 1000);
   }
 
-  function endLevel() {
+  function startEndless() {
+    gameMode = 'endless';
+    initAudio(); sfx.start();
+    score = 0; timeLeft = 0; combo = 0; comboMult = 1;
+    endlessBaseSize = 70; endlessBombChance = 0.18;
+    running = true; paused = false;
+    overlay.classList.add('hidden'); setGameUI(true);
+    
+    modeEl.textContent = 'Бесконечность';
+    scoreEl.textContent = 0; goalEl.textContent = progress.best['endless'] || 0;
+    timeEl.textContent = '∞'; timebar.style.width = '100%';
+    comboBadge.classList.remove('show');
+    target.style.display = 'block';
+    pauseBtn.textContent = '⏸ Пауза';
+    moveTarget(); clearBomb();
+    bombTimeout = setTimeout(maybeSpawnBomb, 1000);
+    
+    clearInterval(timer);
+    timer = setInterval(() => {
+      if (paused) return;
+      if (timeLeft % 4 === 0 && timeLeft > 0) {
+        endlessBaseSize = Math.max(30, endlessBaseSize - 2);
+        endlessBombChance = Math.min(0.6, endlessBombChance + 0.03);
+      }
+      timeLeft++;
+    }, 1000);
+  }
+
+  function endGame() {
     clearInterval(timer); clearBomb(); running = false; target.style.display = 'none';
-    const c = LEVELS[currentLevel - 1]; const passed = score >= c.goal;
+    setGameUI(false);
+    
+    if (gameMode === 'level') {
+      const c = LEVELS[currentLevel - 1]; const passed = score >= c.goal;
+      
+      // Награда за уровень: 50 базовых монет + очки
+      let earnedCoins = 0;
+      if (currentUser) {
+        if (score > (progress.best[currentLevel] || 0)) progress.best[currentLevel] = score;
+        if (passed && progress.unlocked <= currentLevel && currentLevel < 50) progress.unlocked = currentLevel + 1;
+        if (passed && currentLevel === 50) progress.unlocked = 50;
+        
+        if (passed) {
+          earnedCoins = 50 + Math.round(score);
+          progress.coins = (progress.coins || 0) + earnedCoins;
+        }
+        saveUserDataToDB(); updateTopPanel();
+      }
 
-    if (currentUser) {
-      if (score > (progress.best[currentLevel] || 0)) progress.best[currentLevel] = score;
-      if (passed && progress.unlocked <= currentLevel && currentLevel < 50) progress.unlocked = currentLevel + 1;
-      if (passed && currentLevel === 50) progress.unlocked = 50;
-      saveUserDataToDB(); // Сохранение в Firebase!
-    }
-
-    if (passed) {
-      sfx.win(); const isLast = currentLevel === 50;
-      overlay.innerHTML = `
-        <h2>${isLast ? '🏆 Все 50 уровней пройдены!' : '✅ Уровень пройден!'}</h2>
-        <p>Уровень ${currentLevel} · Очки</p>
-        <div class="big">${score} / ${c.goal}</div>
-        ${currentUser ? `<p>Рекорд уровня: <b>${progress.best[currentLevel]}</b></p>` : '<p>Войди, чтобы сохранять прогресс!</p>'}
-        <div class="btnRow">
-          ${!isLast ? `<button class="action-btn" id="nextBtn">Дальше →</button>` : ''}
-          <button class="action-btn" id="againBtn" style="background:#0f3460;">Ещё раз</button>
-          <button class="action-btn" id="menuBtn" style="background:#0f3460;">☰ Меню</button>
-        </div>
-      `;
-      overlay.classList.remove('hidden');
-      if (!isLast) document.getElementById('nextBtn').onclick = () => startLevel(currentLevel + 1);
-      document.getElementById('againBtn').onclick = () => startLevel(currentLevel);
-      document.getElementById('menuBtn').onclick = startMenu;
-    } else {
+      if (passed) {
+        sfx.win(); const isLast = currentLevel === 50;
+        overlay.innerHTML = `
+          <h2>${isLast ? '🏆 Все 50 уровней пройдены!' : '✅ Уровень пройден!'}</h2>
+          <p>Уровень ${currentLevel} · Очки</p>
+          <div class="big">${score} / ${c.goal}</div>
+          ${currentUser ? `<p style="color:#ffd700; font-weight:bold;">💰 Получено: +${earnedCoins} монет</p>` : ''}
+          <div class="btnRow" style="margin-top:20px;">
+            ${!isLast ? `<button class="menu-btn" id="nextBtn" style="flex:1;">Дальше →</button>` : ''}
+            <button class="menu-btn secondary" id="menuBtn" style="flex:1;">В меню</button>
+          </div>
+        `;
+        overlay.classList.remove('hidden');
+        if (!isLast) document.getElementById('nextBtn').onclick = () => startLevel(currentLevel + 1);
+        document.getElementById('menuBtn').onclick = startMenu;
+      } else {
+        sfx.lose();
+        overlay.innerHTML = `
+          <h2 style="color:#e94560">❌ Не хватило очков</h2>
+          <p>Уровень ${currentLevel} · Цель: ${c.goal}</p>
+          <div class="big" style="color:#b0b8c8">${score} / ${c.goal}</div>
+          <div class="btnRow" style="margin-top:20px;">
+            <button class="menu-btn" id="retryBtn" style="flex:1;">Ещё раз</button>
+            <button class="menu-btn secondary" id="menuBtn" style="flex:1;">В меню</button>
+          </div>
+        `;
+        overlay.classList.remove('hidden');
+        document.getElementById('retryBtn').onclick = () => startLevel(currentLevel);
+        document.getElementById('menuBtn').onclick = startMenu;
+      }
+    } 
+    else if (gameMode === 'endless') {
       sfx.lose();
+      const record = progress.best['endless'] || 0;
+      let newRecord = false;
+      
+      if (currentUser) {
+        if (score > record) { progress.best['endless'] = score; newRecord = true; }
+        progress.coins = (progress.coins || 0) + score;
+        saveUserDataToDB(); updateTopPanel();
+      }
+
       overlay.innerHTML = `
-        <h2 style="color:#e94560">❌ Не хватило очков</h2>
-        <p>Уровень ${currentLevel} · Цель: ${c.goal}</p>
-        <div class="big" style="color:#b0b8c8">${score} / ${c.goal}</div>
-        <p>Не хватило <b style="color:#e94560">${c.goal - score}</b> очков</p>
-        <div class="btnRow">
-          <button class="action-btn" id="retryBtn">Ещё раз</button>
-          <button class="action-btn" id="menuBtn" style="background:#0f3460;">☰ Меню</button>
+        <h2 style="color:#e94560">💥 БУМ! Игра окончена</h2>
+        <p>Ты продержался ${timeLeft} секунд.</p>
+        <div class="big">${score}</div>
+        <p>${newRecord ? '🌟 НОВЫЙ РЕКОРД! 🌟' : `Твой рекорд: ${record}`}</p>
+        ${currentUser ? `<p style="color:#ffd700; font-weight:bold;">💰 Получено: +${score} монет</p>` : ''}
+        <div class="btnRow" style="margin-top:20px;">
+          <button class="menu-btn" id="retryBtn" style="flex:1;">Ещё раз</button>
+          <button class="menu-btn secondary" id="menuBtn" style="flex:1;">В меню</button>
         </div>
       `;
       overlay.classList.remove('hidden');
-      document.getElementById('retryBtn').onclick = () => startLevel(currentLevel);
+      document.getElementById('retryBtn').onclick = () => startEndless();
       document.getElementById('menuBtn').onclick = startMenu;
     }
   }
@@ -476,12 +605,18 @@
     if (!running || paused) return;
     e.preventDefault();
     const now = Date.now(); const delta = now - lastHit; lastHit = now;
+    
     if (delta < 700) combo++; else combo = 0;
+
+    const maxCombo = 2.0;
+
     if (combo > 0 && combo % 3 === 0) {
-      comboMult = Math.min(1 + Math.floor(combo / 3) * 0.5, 4); sfx.combo();
+      comboMult = Math.min(maxCombo, 1 + Math.floor(combo / 3) * 0.5);
+      sfx.combo();
       comboBadge.textContent = `🔥 COMBO x${comboMult.toFixed(1)}`;
       comboBadge.classList.add('show');
     }
+
     const points = Math.round(1 * comboMult);
     score += points; scoreEl.textContent = score;
     const rect = arena.getBoundingClientRect();
@@ -504,39 +639,36 @@
 
   function startMenu() {
     running = false; clearInterval(timer); clearBomb(); target.style.display = 'none';
-    const cells = LEVELS.map(l => {
-      const unlocked = l.level <= progress.unlocked;
-      const done = (progress.best[l.level] || 0) >= l.goal;
-      const isCurrent = l.level === progress.unlocked;
-      let cls = 'lvl';
-      if (!unlocked) cls += ' locked'; else if (done) cls += ' done'; else if (isCurrent) cls += ' current';
-      const bombMark = l.bombChance > 0 ? '<span class="bombMark">💣</span>' : '';
-      return `<div class="${cls}" data-level="${l.level}">${l.level}${bombMark}</div>`;
-    }).join('');
-
+    setGameUI(false);
+    applyBg(progress.currentBg || 'bg-default');
+    
     overlay.innerHTML = `
       <h2 style="margin-top:10px;">🎯 Поймай квадрат</h2>
-      <p>С 10-го уровня появляются 💣 бомбы (−5 очков).</p>
-      ${!currentUser ? `<p style="color:#e94560; font-size:0.8rem; margin-top:-4px;">Войди в аккаунт (справа вверху), чтобы сохранять прогресс!</p>` : ''}
-      <div class="settings">
+      <p>Выбирай режим и зарабатывай монеты!</p>
+      ${!currentUser ? `<p style="color:#e94560; font-size:0.8rem; margin-top:-4px;">Войди в аккаунт, чтобы сохранять монеты и фоны!</p>` : ''}
+      
+      <div class="menu-grid" style="margin-top:20px;">
+        <button class="menu-btn" id="btnEndless" style="background:#4ecca3; color:#0d0d1a;">🚀 Бесконечный режим</button>
+        <button class="menu-btn" id="btnLevels">🎯 Выбрать уровень (${progress.unlocked}/50)</button>
+        <button class="menu-btn secondary" id="btnShop">🛒 Магазин фонов</button>
+      </div>
+
+      <div class="settings" style="margin-top:20px;">
         <div class="row">
           <label>Громкость</label>
           <div class="volume-wrap">
             <input type="range" id="volSlider" min="0" max="1" step="0.05" value="${settings.volume}">
             <span id="volVal">${Math.round(settings.volume*100)}%</span>
-            <button id="muteBtn" title="Mute">${settings.muted ? '🔇' : '🔊'}</button>
+            <button id="muteBtn">${settings.muted ? '🔇' : '🔊'}</button>
           </div>
         </div>
       </div>
-      <div id="levelGrid">${cells}</div>
-      <div class="legend">
-        <span><span class="dot" style="background:#1a5a3a;border:1px solid #4ecca3"></span>Пройден</span>
-        <span><span class="dot" style="background:#e94560"></span>Текущий</span>
-        <span><span class="dot" style="background:#0a1225;border:1px solid #3a4560"></span>Закрыт</span>
-      </div>
-      <button class="action-btn" id="playBtn" style="margin-top:10px; width:100%; max-width:380px;">▶ Играть уровень ${progress.unlocked}</button>
     `;
     overlay.classList.remove('hidden');
+
+    document.getElementById('btnEndless').onclick = () => { sfx.ui(); startEndless(); };
+    document.getElementById('btnLevels').onclick = () => { sfx.ui(); showLevels(); };
+    document.getElementById('btnShop').onclick = () => { sfx.ui(); showShop(); };
 
     const volSlider = document.getElementById('volSlider');
     const volVal = document.getElementById('volVal');
@@ -555,7 +687,29 @@
       muteBtn.textContent = settings.muted ? '🔇' : '🔊';
       initAudio(); if (!settings.muted) sfx.ui();
     };
+  }
 
+  function showLevels() {
+    const cells = LEVELS.map(l => {
+      const unlocked = l.level <= progress.unlocked;
+      const done = (progress.best[l.level] || 0) >= l.goal;
+      const isCurrent = l.level === progress.unlocked;
+      let cls = 'lvl';
+      if (!unlocked) cls += ' locked'; else if (done) cls += ' done'; else if (isCurrent) cls += ' current';
+      return `<div class="${cls}" data-level="${l.level}">${l.level}</div>`;
+    }).join('');
+
+    overlay.innerHTML = `
+      <h2>🎯 Выбор уровня</h2>
+      <p>Проходи уровни, чтобы открывать новые.</p>
+      <div id="levelGrid">${cells}</div>
+      <div class="btnRow" style="margin-top:20px;">
+        <button class="menu-btn secondary" id="backBtn" style="width:100%;">Назад в меню</button>
+      </div>
+    `;
+    overlay.classList.remove('hidden');
+    
+    document.getElementById('backBtn').onclick = () => { sfx.ui(); startMenu(); };
     overlay.querySelectorAll('.lvl').forEach(cell => {
       cell.onclick = () => {
         const lvl = Number(cell.dataset.level);
@@ -563,8 +717,69 @@
         sfx.ui(); startLevel(lvl);
       };
     });
-    document.getElementById('playBtn').onclick = () => startLevel(progress.unlocked);
   }
+
+  function showShop() {
+    let shopHtml = Object.keys(BGS).map(key => {
+      const bg = BGS[key];
+      const isOwned = progress.ownedBg.includes(key);
+      const isEquipped = progress.currentBg === key;
+      
+      let btnHtml = '';
+      if (isEquipped) {
+        btnHtml = `<button class="menu-btn equipped" disabled>Надет</button>`;
+      } else if (isOwned) {
+        btnHtml = `<button class="menu-btn buy" onclick="equipBg('${key}')">Надеть</button>`;
+      } else {
+        // Убрали цену с кнопки покупки
+        btnHtml = `<button class="menu-btn" onclick="buyBg('${key}', ${bg.price})">Купить</button>`;
+      }
+
+      return `
+        <div class="shop-item">
+          <div class="info">
+            <h4>${bg.name}</h4>
+            <span>${bg.price === 0 ? 'Бесплатно' : bg.price + ' 💰'}</span>
+          </div>
+          ${btnHtml}
+        </div>
+      `;
+    }).join('');
+
+    overlay.innerHTML = `
+      <h2>🛒 Магазин фонов</h2>
+      <p>У тебя: <b style="color:#ffd700">${progress.coins || 0} 💰</b></p>
+      <div style="display:flex; flex-direction:column; gap:10px; width:100%; max-width:380px; margin-top:15px;">
+        ${shopHtml}
+      </div>
+      <div class="btnRow" style="margin-top:20px; width:100%; max-width:380px;">
+        <button class="menu-btn secondary" id="backBtn" style="width:100%;">Назад в меню</button>
+      </div>
+    `;
+    overlay.classList.remove('hidden');
+    
+    document.getElementById('backBtn').onclick = () => { sfx.ui(); startMenu(); };
+  }
+
+  window.buyBg = function(key, price) {
+    if (!currentUser) { alert("Войди в аккаунт, чтобы покупать фоны!"); return; }
+    if (progress.coins >= price) {
+      progress.coins -= price;
+      progress.ownedBg.push(key);
+      progress.currentBg = key;
+      applyBg(key);
+      saveUserDataToDB(); updateTopPanel(); showShop(); sfx.buy();
+    } else {
+      alert("Не хватает монет! Играй в бесконечный режим или проходи уровни.");
+      playTone(200, 0.1, 'sawtooth', 0.1);
+    }
+  };
+
+  window.equipBg = function(key) {
+    progress.currentBg = key;
+    applyBg(key);
+    saveUserDataToDB(); showShop(); sfx.ui();
+  };
 
   settingsBtn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -573,6 +788,7 @@
     startMenu();
   });
 
+  // --- ИНИЦИАЛИЗАЦИЯ ---
   updateTopPanel();
   startMenu(); 
 
