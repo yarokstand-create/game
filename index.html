@@ -47,8 +47,15 @@
   .bomb { position: absolute; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #555, #111 70%); box-shadow: 0 0 18px rgba(255,80,80,0.6), inset -4px -4px 8px rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; will-change: left, top; animation: bombPulse 0.8s ease-in-out infinite alternate; }
   @keyframes bombPulse { from { box-shadow: 0 0 12px rgba(255,80,80,0.4), inset -4px -4px 8px rgba(0,0,0,0.8); } to { box-shadow: 0 0 28px rgba(255,80,80,0.95), inset -4px -4px 8px rgba(0,0,0,0.8); } }
 
-  .pop { position: absolute; font-weight: bold; color: #4ecca3; pointer-events: none; animation: popUp 0.7s ease-out forwards; font-size: 1.2rem; text-shadow: 0 0 8px rgba(78,204,163,0.8); z-index: 6; }
+  /* Стили для бонусов */
+  .bonus { position: absolute; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; z-index: 8; animation: bounce 0.5s ease-in-out infinite alternate; }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+  .bonus.star { color: #ffd700; text-shadow: 0 0 10px #ffd700; }
+  .bonus.time { color: #4ecca3; text-shadow: 0 0 10px #4ecca3; }
+
+  .pop { position: absolute; font-weight: bold; color: #4ecca3; pointer-events: none; animation: popUp 0.7s ease-out forwards; font-size: 1.2rem; text-shadow: 0 0 8px rgba(78,204,163,0.8); z-index: 9; }
   .pop.bad { color: #ff4d4d; text-shadow: 0 0 8px rgba(255,77,77,0.9); }
+  .pop.gold { color: #ffd700; text-shadow: 0 0 8px rgba(255,215,0,0.9); }
   @keyframes popUp { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); } 100% { opacity: 0; transform: translate(-50%, -150%) scale(1.3); } }
 
   .flash { position: absolute; border-radius: 50%; pointer-events: none; background: radial-gradient(circle, rgba(255,255,255,0.9), transparent 70%); animation: flashOut 0.4s ease-out forwards; z-index: 5; }
@@ -102,7 +109,6 @@
   .auth-error { color: #ff4d4d; font-size: 0.8rem; min-height: 1.2em; text-align: center; margin-top: -4px; }
   .close-auth { font-size: 0.8rem; color: #7a8ba8; cursor: pointer; text-decoration: underline; text-align: center; margin-top: 4px; }
 
-  /* Стили для магазина */
   .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 380px; margin-top: 10px; }
   .shop-item { background: #16213e; border: 1px solid #0f3460; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
   .shop-item:hover { border-color: #4ecca3; transform: translateY(-2px); }
@@ -127,6 +133,7 @@
     <div class="stat"><div class="label">Очки</div><div class="value" id="score">0</div></div>
     <div class="stat"><div class="label">Цель/Время</div><div class="value" id="goal">0</div></div>
     <div class="stat"><div class="label">Время</div><div class="value" id="time">30</div></div>
+    <div class="stat"><div class="label">Монеты</div><div class="value" id="coinHud">0</div></div>
   </div>
 
   <div id="timebar-wrap" style="display:none;"><div id="timebar"></div></div>
@@ -159,7 +166,7 @@
     const firebaseConfig = {
     apiKey: "AIzaSyCZ-1lTVrL_5xYX7-_8EDBxC_1tsj-ayRA",
     authDomain: "yrik-0gameblock.firebaseapp.com",
-    databaseURL: "https://yrik-0gameblock-default-rtdb.firebaseio.com", // <-- ИСПРАВИЛ БУКВУ (yrik)
+    databaseURL: "https://yrik-0gameblock-default-rtdb.firebaseio.com", 
     projectId: "yrik-0gameblock",
     storageBucket: "yrik-0gameblock.firebasestorage.app",
     messagingSenderId: "155342712918",
@@ -183,6 +190,7 @@
   const timeEl   = document.getElementById('time');
   const goalEl   = document.getElementById('goal');
   const levelEl  = document.getElementById('levelVal');
+  const coinHud  = document.getElementById('coinHud');
   const timebar  = document.getElementById('timebar');
   const pauseBtn = document.getElementById('pauseBtn');
   const settingsBtn = document.getElementById('settingsBtn');
@@ -191,7 +199,6 @@
   const timebarWrap = document.getElementById('timebar-wrap');
   const controlBar = document.getElementById('controlBar');
 
-  // --- ДАННЫЕ ---
   const THEMES = {
     default: { name: 'Стандарт', price: 0, bg: '#16213e', arena: '#0d0d1a' },
     neon: { name: 'Неон', price: 100, bg: '#0a001a', arena: '#1a0033' },
@@ -204,6 +211,8 @@
   let settings = { volume: 0.5, muted: false, theme: 'default' };
   let progress = { unlocked: 1, best: {}, coins: 0, ownedThemes: ['default'] };
   let isEndless = false;
+
+  function updateCoinHud() { coinHud.textContent = progress.coins; }
 
   function updateTheme() {
     const t = THEMES[settings.theme] || THEMES.default;
@@ -234,7 +243,7 @@
           sfx.ui(); currentUser = null; localStorage.removeItem('catchCurrentUser');
           progress = { unlocked: 1, best: {}, coins: 0, ownedThemes: ['default'] };
           settings = { volume: 0.5, muted: false, theme: 'default' };
-          updateTheme(); updateTopPanel(); startMenu();
+          updateTheme(); updateTopPanel(); updateCoinHud(); startMenu();
         }
       };
     } else {
@@ -314,6 +323,7 @@
     if (!progress.ownedThemes) progress.ownedThemes = ['default'];
     
     updateTheme();
+    updateCoinHud();
     authModal.classList.remove('show');
     updateTopPanel();
     startMenu();
@@ -332,7 +342,6 @@
     });
   }
 
-  // --- УРОВНИ ---
   function makeLevels() {
     const levels = [];
     for (let i = 1; i <= 50; i++) {
@@ -381,429 +390,6 @@
     tick:  () => playTone(880, 0.05, 'sine', 0.06),
     bomb:  () => { playTone(120, 0.4, 'sawtooth', 0.3, 40); playTone(80, 0.5, 'square', 0.2, 30); },
     ui:    () => playTone(520, 0.06, 'sine', 0.1),
-    buy:   () => { playTone(600, 0.1, 'sine', 0.1); setTimeout(()=>playTone(800, 0.1, 'sine', 0.1), 100); setTimeout(()=>playTone(1000, 0.2, 'sine', 0.1), 200); }
-  };
-
-  function spawnEffect(x, y, text, bad = false) {
-    const pop = document.createElement('div');
-    pop.className = 'pop' + (bad ? ' bad' : '');
-    pop.textContent = text; pop.style.left = x + 'px'; pop.style.top = y + 'px';
-    arena.appendChild(pop); setTimeout(() => pop.remove(), 700);
-    if (!bad) {
-      const flash = document.createElement('div');
-      flash.className = 'flash'; flash.style.left = x + 'px'; flash.style.top = y + 'px';
-      flash.style.width = '80px'; flash.style.height = '80px';
-      arena.appendChild(flash); setTimeout(() => flash.remove(), 400);
-    }
-  }
-  function spawnExplosion(x, y) {
-    const ex = document.createElement('div');
-    ex.className = 'explosion'; ex.style.left = x + 'px'; ex.style.top = y + 'px';
-    ex.style.width = '90px'; ex.style.height = '90px';
-    arena.appendChild(ex); setTimeout(() => ex.remove(), 500);
-  }
-
-  let bombEl = null; let bombTimeout = null;
-  function clearBomb() { if (bombEl) { bombEl.remove(); bombEl = null; } if (bombTimeout) { clearTimeout(bombTimeout); bombTimeout = null; } }
-  
-  function levelCfg() {
-    if (isEndless) {
-      return { baseSize: 60, minSize: 20, bombChance: 0.3, time: 1 }; // Для бесконечности время не важно
-    }
-    return LEVELS[currentLevel - 1];
-  }
-
-  function maybeSpawnBomb() {
-    const c = levelCfg();
-    if (!running || paused || c.bombChance <= 0) return;
-    clearBomb();
-    if (Math.random() > c.bombChance) { bombTimeout = setTimeout(maybeSpawnBomb, 900 + Math.random() * 900); return; }
-    const size = 46;
-    bombEl = document.createElement('div'); bombEl.className = 'bomb'; bombEl.textContent = '💣';
-    bombEl.style.width = size + 'px'; bombEl.style.height = size + 'px';
-    const maxX = arena.clientWidth - size; const maxY = arena.clientHeight - size;
-    bombEl.style.left = Math.random() * maxX + 'px'; bombEl.style.top  = Math.random() * maxY + 'px';
-    bombEl.addEventListener('mousedown', onBombHit); bombEl.addEventListener('touchstart', onBombHit, { passive: false });
-    arena.appendChild(bombEl);
-    bombTimeout = setTimeout(() => { clearBomb(); if (running && !paused) maybeSpawnBomb(); }, 2500 + Math.random() * 1500);
-  }
-
-  function onBombHit(e) {
-    if (!running || paused) return;
-    e.preventDefault(); e.stopPropagation();
-    const rect = arena.getBoundingClientRect();
-    spawnExplosion(e.clientX - rect.left, e.clientY - rect.top); spawnEffect(e.clientX - rect.left, e.clientY - rect.top, '💥 -5', true); sfx.bomb();
-    score = Math.max(0, score - 5); scoreEl.textContent = score;
-    combo = 0; comboMult = 1; comboBadge.classList.remove('show');
-    clearBomb(); if (running && !paused) bombTimeout = setTimeout(maybeSpawnBomb, 800);
-  }
-
-  function moveTarget() {
-    const c = levelCfg();
-    let size = c.baseSize;
-    if (isEndless) {
-       size = Math.max(25, 60 - Math.floor(score / 10));
-    } else {
-       const progressRatio = 1 - (timeLeft / c.time);
-       size = Math.max(c.minSize, c.baseSize - progressRatio * (c.baseSize - c.minSize));
-    }
-    
-    target.style.width = size + 'px'; target.style.height = size + 'px';
-    const maxX = arena.clientWidth - size; const maxY = arena.clientHeight - size;
-    target.style.left = Math.random() * maxX + 'px'; target.style.top  = Math.random() * maxY + 'px';
-    if (c.bombChance > 0) maybeSpawnBomb();
-  }
-
-  function startLevel(n) {
-    isEndless = false;
-    currentLevel = n; const c = LEVELS[n - 1];
-    initAudio(); sfx.start();
-    score = 0; timeLeft = c.time; combo = 0; comboMult = 1;
-    running = true; paused = false;
-    
-    hud.style.display = 'flex';
-    timebarWrap.style.display = 'block';
-    controlBar.style.visibility = 'visible';
-    levelEl.textContent = n;
-    goalEl.textContent = c.goal;
-    
-    overlay.classList.add('hidden');
-    scoreEl.textContent = 0;
-    timeEl.textContent = c.time; timebar.style.width = '100%';
-    comboBadge.classList.remove('show');
-    target.style.display = 'block';
-    pauseBtn.textContent = '⏸ Пауза';
-    moveTarget(); clearBomb();
-    if (c.bombChance > 0) bombTimeout = setTimeout(maybeSpawnBomb, 1200);
-    clearInterval(timer);
-    timer = setInterval(() => {
-      if (paused) return;
-      timeLeft--; timeEl.textContent = timeLeft;
-      timebar.style.width = (timeLeft / c.time * 100) + '%';
-      if (timeLeft <= 5 && timeLeft > 0) sfx.tick();
-      if (timeLeft <= 0) endLevel();
-    }, 1000);
-  }
-
-  function startEndless() {
-    isEndless = true;
-    initAudio(); sfx.start();
-    score = 0; timeLeft = 0; combo = 0; comboMult = 1;
-    running = true; paused = false;
-    
-    hud.style.display = 'flex';
-    timebarWrap.style.display = 'none'; // Прячем полоску времени
-    controlBar.style.visibility = 'visible';
-    levelEl.textContent = '∞';
-    goalEl.textContent = 'Рекорд';
-    
-    overlay.classList.add('hidden');
-    scoreEl.textContent = 0;
-    timeEl.textContent = '∞'; 
-    comboBadge.classList.remove('show');
-    target.style.display = 'block';
-    pauseBtn.textContent = '⏸ Пауза';
-    moveTarget(); clearBomb();
-    
-    maybeSpawnBomb(); // Запускаем бомбы
-    
-    clearInterval(timer);
-    timer = setInterval(() => {
-      if (paused) return;
-      timeLeft++; timeEl.textContent = timeLeft;
-      if (timeLeft % 10 === 0) maybeSpawnBomb(); // Каждые 10 секунд кидаем бомбу
-    }, 1000);
-  }
-
-  function endLevel() {
-    clearInterval(timer); clearBomb(); running = false; target.style.display = 'none';
-    
-    let passed = false;
-    let coinsEarned = 0;
-
-    if (isEndless) {
-      // Бесконечный режим: награда за рекорд
-      const prevBest = progress.best['endless'] || 0;
-      if (score > prevBest) {
-        progress.best['endless'] = score;
-        coinsEarned = Math.floor(score / 5); // 1 монета за 5 очков
-        progress.coins += coinsEarned;
-        saveUserDataToDB();
-      }
-      sfx.lose();
-      overlay.innerHTML = `
-        <h2 style="color:#e94560">💀 Игра окончена</h2>
-        <p>Бесконечный режим</p>
-        <div class="big">${score}</div>
-        <p>Рекорд: <b>${progress.best['endless'] || 0}</b></p>
-        ${coinsEarned > 0 ? `<p style="color:#4ecca3">Заработано: 🪙 ${coinsEarned}</p>` : ''}
-        <div class="btnRow">
-          <button class="action-btn" id="againBtn">Ещё раз</button>
-          <button class="action-btn" id="menuBtn" style="background:#0f3460;">☰ Меню</button>
-        </div>
-      `;
-      overlay.classList.remove('hidden');
-      document.getElementById('againBtn').onclick = startEndless;
-      document.getElementById('menuBtn').onclick = startMenu;
-      updateTopPanel();
-      return;
-    }
-
-    // Обычный уровень
-    const c = LEVELS[currentLevel - 1]; 
-    passed = score >= c.goal;
-    coinsEarned = Math.floor(score / 2); // 1 монета за 2 очка
-
-    if (currentUser) {
-      if (score > (progress.best[currentLevel] || 0)) progress.best[currentLevel] = score;
-      if (passed && progress.unlocked <= currentLevel && currentLevel < 50) progress.unlocked = currentLevel + 1;
-      if (passed && currentLevel === 50) progress.unlocked = 50;
-      progress.coins += coinsEarned;
-      saveUserDataToDB(); 
-      updateTopPanel();
-    }
-
-    if (passed) {
-      sfx.win(); const isLast = currentLevel === 50;
-      overlay.innerHTML = `
-        <h2>${isLast ? '🏆 Все 50 уровней пройдены!' : '✅ Уровень пройден!'}</h2>
-        <p>Уровень ${currentLevel} · Очки</p>
-        <div class="big">${score} / ${c.goal}</div>
-        <p>Заработано: 🪙 ${coinsEarned}</p>
-        ${currentUser ? `<p>Рекорд уровня: <b>${progress.best[currentLevel]}</b></p>` : ''}
-        <div class="btnRow">
-          ${!isLast ? `<button class="action-btn" id="nextBtn">Дальше →</button>` : ''}
-          <button class="action-btn" id="againBtn" style="background:#0f3460;">Ещё раз</button>
-          <button class="action-btn" id="menuBtn" style="background:#0f3460;">☰ Меню</button>
-        </div>
-      `;
-      overlay.classList.remove('hidden');
-      if (!isLast) document.getElementById('nextBtn').onclick = () => startLevel(currentLevel + 1);
-      document.getElementById('againBtn').onclick = () => startLevel(currentLevel);
-      document.getElementById('menuBtn').onclick = startMenu;
-    } else {
-      sfx.lose();
-      overlay.innerHTML = `
-        <h2 style="color:#e94560">❌ Не хватило очков</h2>
-        <p>Уровень ${currentLevel} · Цель: ${c.goal}</p>
-        <div class="big" style="color:#b0b8c8">${score} / ${c.goal}</div>
-        <p>Не хватило <b style="color:#e94560">${c.goal - score}</b> очков</p>
-        <div class="btnRow">
-          <button class="action-btn" id="retryBtn">Ещё раз</button>
-          <button class="action-btn" id="menuBtn" style="background:#0f3460;">☰ Меню</button>
-        </div>
-      `;
-      overlay.classList.remove('hidden');
-      document.getElementById('retryBtn').onclick = () => startLevel(currentLevel);
-      document.getElementById('menuBtn').onclick = startMenu;
-    }
-  }
-
-  function hit(e) {
-    if (!running || paused) return;
-    e.preventDefault();
-    const now = Date.now(); const delta = now - lastHit; lastHit = now;
-    if (delta < 700) combo++; else combo = 0;
-    if (combo > 0 && combo % 3 === 0) {
-      comboMult = Math.min(1 + Math.floor(combo / 3) * 0.5, 4); sfx.combo();
-      comboBadge.textContent = `🔥 COMBO x${comboMult.toFixed(1)}`;
-      comboBadge.classList.add('show');
-    }
-    const points = Math.round(1 * comboMult);
-    score += points; scoreEl.textContent = score;
-    const rect = arena.getBoundingClientRect();
-    spawnEffect(e.clientX - rect.left, e.clientY - rect.top, '+' + points);
-    sfx.hit(combo); moveTarget();
-  }
-
-  target.addEventListener('mousedown', hit);
-  target.addEventListener('touchstart', hit, { passive: false });
-
-  pauseBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!running) return;
-    paused = !paused;
-    pauseBtn.textContent = paused ? '▶ Продолжить' : '⏸ Пауза';
-    sfx.pause();
-    if (paused) { overlay.innerHTML = `<h2>⏸ Пауза</h2><p>Отдохни немного 😌</p>`; overlay.classList.remove('hidden'); }
-    else { overlay.classList.add('hidden'); }
-  });
-
-  // --- ГЛАВНОЕ МЕНЮ ---
-  function startMenu() {
-    running = false; clearInterval(timer); clearBomb(); target.style.display = 'none';
-    hud.style.display = 'none';
-    timebarWrap.style.display = 'none';
-    controlBar.style.visibility = 'hidden';
-    
-    overlay.innerHTML = `
-      <h2 style="margin-top:10px; font-size:1.6rem; color:#4ecca3;">🎯 Поймай квадрат</h2>
-      <p>Зарабатывай монеты и открывай фоны!</p>
-      
-      <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:10px;">
-        <span style="font-size:1.2rem; color:#e94560;">🪙 Монеты: <b>${progress.coins}</b></span>
-      </div>
-
-      <div class="settings">
-        <div class="row">
-          <label>Громкость</label>
-          <div class="volume-wrap">
-            <input type="range" id="volSlider" min="0" max="1" step="0.05" value="${settings.volume}">
-            <span id="volVal">${Math.round(settings.volume*100)}%</span>
-            <button id="muteBtn" title="Mute">${settings.muted ? '🔇' : '🔊'}</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="btnRow" style="flex-direction:column; gap:10px; margin-top:15px; width:100%; max-width:380px;">
-        <button class="action-btn" id="playBtn" style="font-size:1.2rem;">▶ Играть уровень ${progress.unlocked}</button>
-        <button class="action-btn" id="endlessBtn" style="background:#4ecca3; color:#0d0d1a;">♾ Бесконечный режим</button>
-        <button class="action-btn" id="shopBtn" style="background:#0f3460;">🛒 Магазин</button>
-        <button class="action-btn" id="levelsBtn" style="background:#0f3460; font-size:0.9rem;">☰ Выбор уровня</button>
-      </div>
-      ${!currentUser ? `<p style="color:#e94560; font-size:0.8rem; margin-top:10px;">Войди в аккаунт, чтобы зарабатывать монеты!</p>` : ''}
-    `;
-    overlay.classList.remove('hidden');
-
-    // Привязка кнопок
-    document.getElementById('playBtn').onclick = () => startLevel(progress.unlocked);
-    document.getElementById('endlessBtn').onclick = startEndless;
-    document.getElementById('shopBtn').onclick = openShop;
-    document.getElementById('levelsBtn').onclick = openLevels;
-
-    // Настройки звука
-    const volSlider = document.getElementById('volSlider');
-    const volVal = document.getElementById('volVal');
-    volSlider.oninput = () => {
-      settings.volume = Number(volSlider.value);
-      volVal.textContent = Math.round(settings.volume*100) + '%';
-      if (currentUser) saveUserDataToDB();
-      if (!settings.muted) { initAudio(); playTone(600, 0.06, 'sine', 0.1); }
-    };
-    volSlider.onchange = () => sfx.ui();
-    
-    const muteBtn = document.getElementById('muteBtn');
-    muteBtn.onclick = () => {
-      settings.muted = !settings.muted;
-      if (currentUser) saveUserDataToDB();
-      muteBtn.textContent = settings.muted ? '🔇' : '🔊';
-      initAudio(); if (!settings.muted) sfx.ui();
-    };
-  }
-
-  // --- МАГАЗИН ---
-  function openShop() {
-    overlay.innerHTML = `
-      <h2 style="color:#e94560; margin-top:10px;">🛒 Магазин фонов</h2>
-      <p>У тебя <b style="color:#4ecca3;">🪙 ${progress.coins}</b> монет.</p>
-      
-      <div class="shop-grid">
-        ${Object.entries(THEMES).map(([key, t]) => {
-          const isOwned = progress.ownedThemes.includes(key);
-          const isActive = settings.theme === key;
-          return `
-            <div class="shop-item ${isActive ? 'active' : ''} ${!isOwned ? 'locked' : ''}" data-theme="${key}">
-              <div class="bg-preview" style="background:${t.bg};"></div>
-              <div class="name">${t.name}</div>
-              ${isOwned 
-                ? `<div class="price" style="color:#4ecca3;">${isActive ? 'Выбран' : 'Выбрать'}</div>`
-                : `<div class="price">🪙 ${t.price}</div>`
-              }
-            </div>
-          `;
-        }).join('')}
-      </div>
-      
-      <button class="action-btn" id="backToMenuBtn" style="margin-top:15px; background:#0f3460;">← Назад</button>
-    `;
-
-    document.getElementById('backToMenuBtn').onclick = startMenu;
-
-    document.querySelectorAll('.shop-item').forEach(item => {
-      item.onclick = () => {
-        const themeKey = item.dataset.theme;
-        const t = THEMES[themeKey];
-        const isOwned = progress.ownedThemes.includes(themeKey);
-
-        if (isOwned) {
-          settings.theme = themeKey;
-          updateTheme();
-          saveUserDataToDB();
-          sfx.ui();
-          openShop(); // Перерисовываем магазин, чтобы обновить статус
-        } else {
-          if (progress.coins >= t.price) {
-            progress.coins -= t.price;
-            progress.ownedThemes.push(themeKey);
-            settings.theme = themeKey;
-            updateTheme();
-            saveUserDataToDB();
-            updateTopPanel();
-            sfx.buy();
-            openShop(); // Перерисовываем
-          } else {
-            sfx.lose();
-            alert("Не хватает монет!");
-          }
-        }
-      };
-    });
-  }
-
-  // --- ЭКРАН УРОВНЕЙ ---
-  function openLevels() {
-    const cells = LEVELS.map(l => {
-      const unlocked = l.level <= progress.unlocked;
-      const done = (progress.best[l.level] || 0) >= l.goal;
-      const isCurrent = l.level === progress.unlocked;
-      let cls = 'lvl';
-      if (!unlocked) cls += ' locked'; else if (done) cls += ' done'; else if (isCurrent) cls += ' current';
-      const bombMark = l.bombChance > 0 ? '<span class="bombMark">💣</span>' : '';
-      return `<div class="${cls}" data-level="${l.level}">${l.level}${bombMark}</div>`;
-    }).join('');
-
-    overlay.innerHTML = `
-      <h2 style="margin-top:10px;">Выбор уровня</h2>
-      <div id="levelGrid">${cells}</div>
-      <div class="legend">
-        <span><span class="dot" style="background:#1a5a3a;border:1px solid #4ecca3"></span>Пройден</span>
-        <span><span class="dot" style="background:#e94560"></span>Текущий</span>
-        <span><span class="dot" style="background:#0a1225;border:1px solid #3a4560"></span>Закрыт</span>
-      </div>
-      <button class="action-btn" id="backToMenuBtn" style="margin-top:15px; background:#0f3460;">← Назад</button>
-    `;
-
-    document.getElementById('backToMenuBtn').onclick = startMenu;
-
-    overlay.querySelectorAll('.lvl').forEach(cell => {
-      cell.onclick = () => {
-        const lvl = Number(cell.dataset.level);
-        if (lvl > progress.unlocked) { cell.style.borderColor = '#e94560'; setTimeout(() => cell.style.borderColor = 'transparent', 200); playTone(200, 0.1, 'sawtooth', 0.1); return; }
-        sfx.ui(); startLevel(lvl);
-      };
-    });
-  }
-
-  settingsBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!running) return;
-    paused = true;
-    startMenu();
-  });
-
-  // --- ИНИЦИАЛИЗАЦИЯ ---
-  updateTheme();
-  updateTopPanel();
-  startMenu(); 
-
-  const savedUser = localStorage.getItem('catchCurrentUser');
-  if (savedUser && db) {
-    db.ref('users/' + savedUser).once('value').then(snap => {
-      if (snap.exists()) {
-        loginSuccess(savedUser, snap.val());
-      }
-    }).catch(console.error);
-  }
-</script>
-</body>
-</html>
+    buy:   () => { playTone(600, 0.1, 'sine', 0.1); setTimeout(()=>playTone(800, 0.1, 'sine', 0.1), 100); setTimeout(()=>playTone(1000, 0.2, 'sine', 0.1), 200); },
+    star:  () => { playTone(880, 0.1, 'sine', 0.2); setTimeout(()=>playTone(1320, 0.15, 'sine', 0.2), 80); },
+    time:
