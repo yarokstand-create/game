@@ -143,13 +143,9 @@
 
 <script>
   // ============================================================
-  // ВСТАВЬ СЮДА СВОЙ ТОКЕН И НИК С ГИТХАБА
+  // ТВОЙ URL БАЗЫ ДАННЫХ FIREBASE (REST API)
   // ============================================================
-   const RAW_TOKEN = "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"; // Вставь сюда свой токен!
-  const GITHUB_TOKEN = RAW_TOKEN.split("").reverse().join(""); // Шифруем его, чтобы Гитхаб не ругался
-  const GITHUB_USER = "yarokstand-create";
-  const GITHUB_REPO = "game";
-  const GITHUB_FILE = "database.json";       // Файл, который мы создали
+  const DB_URL = "https://test-elc45-default-rtdb.firebaseio.com/users";
   // ============================================================
 
   const arena    = document.getElementById('arena');
@@ -169,48 +165,25 @@
   let currentUser = null;
   let settings = { volume: 0.5, muted: false };
   let progress = { unlocked: 1, best: {} };
-  
-  let globalDB = {}; 
 
-  // ЧТЕНИЕ ИЗ ГИТХАБА
   async function fetchDB() {
     try {
-      const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
-        headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
-      });
-      if (!res.ok) throw new Error('Не удалось загрузить');
-      const fileData = await res.json();
-      const content = decodeURIComponent(escape(atob(fileData.content)));
-      globalDB = JSON.parse(content) || {};
+      const res = await fetch(DB_URL + '.json');
+      if (!res.ok) throw new Error('Ошибка загрузки');
+      return await res.json() || {};
     } catch (e) {
       console.error("Ошибка загрузки:", e);
-      alert("Ошибка загрузки. Проверь токен и файл database.json");
+      return {};
     }
   }
 
-  // ЗАПИСЬ В ГИТХАБ
-  async function pushDB() {
+  async function pushUserData(username, data) {
     try {
-      // Сначала узнаем текущий SHA файла (нужно для обновления)
-      const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
-        headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
-      });
-      const fileData = await res.json();
-      
-      // Отправляем новый контент
-      const updateRes = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
+      await fetch(DB_URL + '/' + username + '.json', {
         method: 'PUT',
-        headers: {
-          'Authorization': `token ${GITHUB_TOKEN}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: 'update database',
-          content: btoa(unescape(encodeURIComponent(JSON.stringify(globalDB)))),
-          sha: fileData.sha
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
       });
-      if (!updateRes.ok) throw new Error('Ошибка записи');
     } catch (e) {
       console.error("Ошибка сохранения:", e);
     }
@@ -266,18 +239,17 @@
     if (!u || !p) { errEl.textContent = 'Заполни все поля!'; return; }
     
     errEl.textContent = 'Загрузка...';
-    await fetchDB(); 
+    const db = await fetchDB(); 
 
     if (u === 'admin' && p === 'AF24h144') {
-      let adminData = globalDB['admin'] || { password: p, settings: { volume: 0.5, muted: false }, progress: { unlocked: 50, best: {} } };
+      let adminData = db['admin'] || { password: p, settings: { volume: 0.5, muted: false }, progress: { unlocked: 50, best: {} } };
       adminData.progress.unlocked = 50;
-      globalDB['admin'] = adminData;
-      await pushDB();
+      await pushUserData('admin', adminData);
       loginSuccess(u, adminData);
       return;
     }
 
-    const existingData = globalDB[u];
+    const existingData = db[u];
 
     if (isLoginMode) {
       if (!existingData) { errEl.textContent = 'Аккаунт не найден'; return; }
@@ -286,8 +258,7 @@
     } else {
       if (existingData) { errEl.textContent = 'Этот ник уже занят'; return; }
       const newData = { password: p, settings: { volume: 0.5, muted: false }, progress: { unlocked: 1, best: {} } };
-      globalDB[u] = newData;
-      await pushDB();
+      await pushUserData(u, newData);
       loginSuccess(u, newData);
     }
   };
@@ -305,8 +276,9 @@
 
   async function saveUserDataToDB() {
     if (!currentUser) return;
-    globalDB[currentUser] = { password: globalDB[currentUser]?.password || '123', settings, progress };
-    await pushDB();
+    const db = await fetchDB(); 
+    db[currentUser] = { password: db[currentUser]?.password || '123', settings, progress };
+    await pushUserData(currentUser, db[currentUser]);
   }
 
   function makeLevels() {
@@ -591,9 +563,9 @@
 
   const savedUser = localStorage.getItem('catchCurrentUser');
   if (savedUser) {
-    fetchDB().then(() => {
-      if (globalDB[savedUser]) {
-        loginSuccess(savedUser, globalDB[savedUser]);
+    fetchDB().then(db => {
+      if (db && db[savedUser]) {
+        loginSuccess(savedUser, db[savedUser]);
       }
     });
   }
