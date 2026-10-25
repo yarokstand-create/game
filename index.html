@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GTA: Pоimай Квадрат</title>
+<title>GTA: Поймай Деньги</title>
 
 <!-- Подключаем легендарный шрифт Pricedown (GTA) -->
 <link href="https://fonts.googleapis.com/css2?family=Pricedown&display=swap" rel="stylesheet">
@@ -21,7 +21,6 @@
     background-image: radial-gradient(circle at 50% 0%, #2a1a00, #000 70%);
   }
   
-  /* GTA Шрифты */
   .gta-font { font-family: 'Pricedown', 'Arial Black', sans-serif; text-transform: uppercase; letter-spacing: 2px; }
   
   h1 { font-size: 2.5rem; margin-bottom: 6px; color: #f39c12; text-shadow: 3px 3px 0px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; text-align: center; }
@@ -53,13 +52,14 @@
   /* Арена */
   #arena { position: relative; width: 90vw; max-width: 500px; height: 500px; max-height: 55vh; background: #111; border: 4px solid #f39c12; overflow: hidden; cursor: crosshair; box-shadow: 0 0 30px rgba(243, 156, 18, 0.2); background-image: radial-gradient(circle at 50% 50%, #222 0%, #050505 100%); }
 
-  /* Квадрат (Цель) */
-  #target { position: absolute; background: #f1c40f; border-radius: 0; box-shadow: 0 0 20px rgba(241, 196, 15, 0.8); will-change: left, top, width, height; transition: width 0.2s, height 0.2s; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+  /* Цель (Деньги) */
+  #target { position: absolute; background: #2ecc71; border-radius: 0; box-shadow: 0 0 20px rgba(46, 204, 113, 0.8); will-change: left, top, width, height; transition: width 0.2s, height 0.2s; display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 2px solid #27ae60; }
   #target::after { content: '💵'; }
   #target:active { transform: scale(0.9); }
 
-  /* Бомбы */
+  /* Бомбы (Гранаты) */
   .bomb { position: absolute; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #555, #111 70%); box-shadow: 0 0 18px rgba(231, 76, 60, 0.8), inset -4px -4px 8px rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; will-change: left, top; animation: bombPulse 0.8s ease-in-out infinite alternate; border: 2px solid #e74c3c; }
+  .bomb::after { content: '💣'; }
   @keyframes bombPulse { from { box-shadow: 0 0 12px rgba(231, 76, 60, 0.4); } to { box-shadow: 0 0 28px rgba(231, 76, 60, 0.95); } }
 
   /* Бонусы */
@@ -143,7 +143,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
-  <h1 class="gta-font">GTA: Поймай Квадрат</h1>
+  <h1 class="gta-font">GTA: Поймай Деньги</h1>
   <div class="sub">Los Santos, San Andreas</div>
 
   <div id="topPanel"></div>
@@ -153,7 +153,7 @@
     <div class="stat"><div class="label">Очки</div><div class="value" id="score">0</div></div>
     <div class="stat"><div class="label">Цель/Время</div><div class="value" id="goal">0</div></div>
     <div class="stat"><div class="label">Время</div><div class="value" id="time">30</div></div>
-    <div class="stat"><div class="label">Деньги</div><div class="value" id="coinHud">$0</div></div>
+    <div class="stat"><div class="label">Бабки</div><div class="value" id="coinHud">$0</div></div>
   </div>
 
   <div id="timebar-wrap" style="display:none;"><div id="timebar"></div></div>
@@ -450,7 +450,7 @@
 
   function maybeSpawnBonus() {
     const c = levelCfg();
-    if (!running || paused || c.bombChance <= 0) return;
+    if (!running || paused) return;
     clearBonus();
     if (Math.random() > 0.2) { 
       bonusTimeout = setTimeout(maybeSpawnBonus, 1500 + Math.random() * 1500); return;
@@ -504,7 +504,7 @@
     clearBomb();
     if (Math.random() > c.bombChance) { bombTimeout = setTimeout(maybeSpawnBomb, 900 + Math.random() * 900); return; }
     const size = 46;
-    bombEl = document.createElement('div'); bombEl.className = 'bomb'; bombEl.textContent = '💣';
+    bombEl = document.createElement('div'); bombEl.className = 'bomb';
     bombEl.style.width = size + 'px'; bombEl.style.height = size + 'px';
     const maxX = arena.clientWidth - size; const maxY = arena.clientHeight - size;
     bombEl.style.left = Math.random() * maxX + 'px'; bombEl.style.top  = Math.random() * maxY + 'px';
@@ -727,7 +727,7 @@
     controlBar.style.visibility = 'hidden';
     
     overlay.innerHTML = `
-      <h2 style="margin-top:10px; font-size:2.2rem;">GTA: Поймай Квадрат</h2>
+      <h2 style="margin-top:10px; font-size:2.2rem;">GTA: Поймай Деньги</h2>
       <p>Los Santos, San Andreas</p>
       
       <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:10px;">
@@ -856,6 +856,7 @@
         <span><span class="dot" style="background:#27ae60;border:1px solid #2ecc71"></span>Пройдено</span>
         <span><span class="dot" style="background:#f39c12"></span>Текущая</span>
         <span><span class="dot" style="background:#000;border:1px solid #333"></span>Закрыто</span>
+        <span>💣 — есть гранаты</span>
       </div>
       <button class="action-btn" id="backToMenuBtn" style="margin-top:15px; background:#222; color:#f39c12;">← Назад</button>
     `;
