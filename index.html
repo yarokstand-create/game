@@ -101,6 +101,11 @@
   .auth-error { color: #ff4d4d; font-size: 0.8rem; min-height: 1.2em; text-align: center; margin-top: -4px; }
   .close-auth { font-size: 0.8rem; color: #7a8ba8; cursor: pointer; text-decoration: underline; text-align: center; margin-top: 4px; }
 </style>
+
+<!-- ПОДКЛЮЧАЕМ ОФИЦИАЛЬНЫЙ FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
 </head>
 <body>
   <h1>🎯 Поймай квадрат — 50 уровней</h1>
@@ -143,9 +148,26 @@
 
 <script>
   // ============================================================
-  // ТВОЙ URL БАЗЫ ДАННЫХ FIREBASE (REST API)
+  // ТВОЙ КОНФИГ FIREBASE
   // ============================================================
-  const DB_URL = "https://test-elc45-default-rtdb.firebaseio.com/users";
+  const firebaseConfig = {
+    apiKey: "AIzaSyCauS0WubVrsg6R1CdTxsDFl50YJpLtbnY",
+    authDomain: "test-elc45.firebaseapp.com",
+    databaseURL: "https://test-elc45-default-rtdb.firebaseio.com",
+    projectId: "test-elc45",
+    storageBucket: "test-elc45.firebasestorage.app",
+    messagingSenderId: "1060491581005",
+    appId: "1:1060491581005:web:a7d24cd7cd26d5b2a7ae04",
+    measurementId: "G-CY138CKQQJ"
+  };
+
+  let db = null;
+  try {
+    if (typeof firebase !== 'undefined') {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+    }
+  } catch (e) { console.error("Firebase не загрузился", e); }
   // ============================================================
 
   const arena    = document.getElementById('arena');
@@ -165,29 +187,6 @@
   let currentUser = null;
   let settings = { volume: 0.5, muted: false };
   let progress = { unlocked: 1, best: {} };
-
-  async function fetchDB() {
-    try {
-      const res = await fetch(DB_URL + '.json');
-      if (!res.ok) throw new Error('Ошибка загрузки');
-      return await res.json() || {};
-    } catch (e) {
-      console.error("Ошибка загрузки:", e);
-      return {};
-    }
-  }
-
-  async function pushUserData(username, data) {
-    try {
-      await fetch(DB_URL + '/' + username + '.json', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-    } catch (e) {
-      console.error("Ошибка сохранения:", e);
-    }
-  }
 
   function updateTopPanel() {
     if (currentUser) {
@@ -231,36 +230,48 @@
 
   document.getElementById('closeAuthBtn').onclick = () => authModal.classList.remove('show');
   
-  document.getElementById('authSubmitBtn').onclick = async () => {
+  document.getElementById('authSubmitBtn').onclick = () => {
     const u = document.getElementById('authUser').value.trim();
     const p = document.getElementById('authPass').value;
     const errEl = document.getElementById('authError');
     
     if (!u || !p) { errEl.textContent = 'Заполни все поля!'; return; }
-    
+    if (!db) { errEl.textContent = 'Ошибка: Нет доступа к Firebase. Проверь интернет!'; return; }
+
     errEl.textContent = 'Загрузка...';
-    const db = await fetchDB(); 
 
     if (u === 'admin' && p === 'AF24h144') {
-      let adminData = db['admin'] || { password: p, settings: { volume: 0.5, muted: false }, progress: { unlocked: 50, best: {} } };
-      adminData.progress.unlocked = 50;
-      await pushUserData('admin', adminData);
-      loginSuccess(u, adminData);
+      db.ref('users/admin').once('value').then(snapshot => {
+        let adminData = snapshot.val();
+        if (!adminData) {
+          adminData = { password: p, settings: { volume: 0.5, muted: false }, progress: { unlocked: 50, best: {} } };
+          db.ref('users/admin').set(adminData);
+        } else {
+          adminData.progress.unlocked = 50;
+          db.ref('users/admin').set(adminData);
+        }
+        loginSuccess(u, adminData);
+      }).catch(e => { errEl.textContent = 'Ошибка Firebase. Проверь правила (Rules)'; });
       return;
     }
 
-    const existingData = db[u];
+    db.ref('users/' + u).once('value').then(snapshot => {
+      const existingData = snapshot.val();
 
-    if (isLoginMode) {
-      if (!existingData) { errEl.textContent = 'Аккаунт не найден'; return; }
-      if (existingData.password !== p) { errEl.textContent = 'Неверный пароль'; return; }
-      loginSuccess(u, existingData);
-    } else {
-      if (existingData) { errEl.textContent = 'Этот ник уже занят'; return; }
-      const newData = { password: p, settings: { volume: 0.5, muted: false }, progress: { unlocked: 1, best: {} } };
-      await pushUserData(u, newData);
-      loginSuccess(u, newData);
-    }
+      if (isLoginMode) {
+        if (!existingData) { errEl.textContent = 'Аккаунт не найден'; return; }
+        if (existingData.password !== p) { errEl.textContent = 'Неверный пароль'; return; }
+        loginSuccess(u, existingData);
+      } else {
+        if (existingData) { errEl.textContent = 'Этот ник уже занят'; return; }
+        const newData = { password: p, settings: { volume: 0.5, muted: false }, progress: { unlocked: 1, best: {} } };
+        db.ref('users/' + u).set(newData).then(() => {
+          loginSuccess(u, newData);
+        }).catch(e => { errEl.textContent = 'Ошибка записи! Открой Firebase -> Rules и разреши чтение/запись.'; });
+      }
+    }).catch(e => {
+      errEl.textContent = 'Ошибка базы данных (Проверь правила Firebase)';
+    });
   };
 
   function loginSuccess(username, data) {
@@ -268,17 +279,23 @@
     localStorage.setItem('catchCurrentUser', username);
     settings = data.settings || { volume: 0.5, muted: false };
     progress = data.progress || { unlocked: 1, best: {} };
+    
     authModal.classList.remove('show');
     updateTopPanel();
     startMenu();
     sfx.start();
   }
 
-  async function saveUserDataToDB() {
-    if (!currentUser) return;
-    const db = await fetchDB(); 
-    db[currentUser] = { password: db[currentUser]?.password || '123', settings, progress };
-    await pushUserData(currentUser, db[currentUser]);
+  function saveUserDataToDB() {
+    if (!currentUser || !db) return;
+    db.ref('users/' + currentUser).once('value').then(snap => {
+      const existing = snap.val() || {};
+      db.ref('users/' + currentUser).set({
+        password: existing.password,
+        settings: settings,
+        progress: progress
+      });
+    });
   }
 
   function makeLevels() {
@@ -419,7 +436,7 @@
       if (score > (progress.best[currentLevel] || 0)) progress.best[currentLevel] = score;
       if (passed && progress.unlocked <= currentLevel && currentLevel < 50) progress.unlocked = currentLevel + 1;
       if (passed && currentLevel === 50) progress.unlocked = 50;
-      saveUserDataToDB(); 
+      saveUserDataToDB(); // Сохранение в Firebase!
     }
 
     if (passed) {
@@ -558,16 +575,18 @@
     startMenu();
   });
 
+  // Инициализация при загрузке
   updateTopPanel();
   startMenu(); 
 
+  // Проверка сохраненного пользователя
   const savedUser = localStorage.getItem('catchCurrentUser');
-  if (savedUser) {
-    fetchDB().then(db => {
-      if (db && db[savedUser]) {
-        loginSuccess(savedUser, db[savedUser]);
+  if (savedUser && db) {
+    db.ref('users/' + savedUser).once('value').then(snap => {
+      if (snap.exists()) {
+        loginSuccess(savedUser, snap.val());
       }
-    });
+    }).catch(console.error);
   }
 </script>
 </body>
